@@ -3191,7 +3191,6 @@ goog.provide('anychart.themes.defaultTheme');
         'keyboardZoomAndMove': true,
         'zoomOnDoubleClick': false
       },
-      'minZoomLevel': 1,
       'maxZoomLevel': 10,
       'overlapMode': 'noOverlap',
       'crsAnimation': {
