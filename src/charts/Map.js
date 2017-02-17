@@ -5526,7 +5526,7 @@ anychart.charts.Map.prototype.setupByJSON = function(config, opt_default) {
   this.maxBubbleSize(config['maxBubbleSize']);
   this.geoIdField(config['geoIdField']);
   this.overlapMode(config['overlapMode']);
-  // this.minZoomLevel(config['minZoomLevel']);
+  this.minZoomLevel(config['minZoomLevel']);
   this.maxZoomLevel(config['maxZoomLevel']);
 
   var geoData = config['geoData'];
@@ -5642,7 +5642,7 @@ anychart.charts.Map.prototype.serialize = function() {
   json['maxBubbleSize'] = this.maxBubbleSize();
   json['geoIdField'] = this.geoIdField();
   json['overlapMode'] = this.overlapMode();
-  // json['minZoomLevel'] = this.minZoomLevel();
+  json['minZoomLevel'] = this.minZoomLevel();
   json['maxZoomLevel'] = this.maxZoomLevel();
 
   var geoData;
