@@ -5434,7 +5434,8 @@ anychart.enums.SeriesDrawerTypes = {
   STEP_AREA: 17,
   STEP_LINE: 18,
   JUMP_LINE: 19,
-  STICK: 20
+  STICK: 20,
+  CONNECTOR: 21
 };
 
 

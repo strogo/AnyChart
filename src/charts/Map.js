@@ -83,25 +83,6 @@ anychart.charts.Map = function() {
   this.mapPaths = [];
 
   /**
-   * Palette for series colors.
-   * @type {anychart.palettes.RangeColors|anychart.palettes.DistinctColors}
-   * @private
-   */
-  this.palette_ = null;
-
-  /**
-   * @type {anychart.palettes.Markers}
-   * @private
-   */
-  this.markerPalette_ = null;
-
-  /**
-   * @type {anychart.palettes.HatchFills}
-   * @private
-   */
-  this.hatchFillPalette_ = null;
-
-  /**
    * @type {!Array.<anychart.core.map.series.Base>}
    * @private
    */
@@ -278,7 +259,37 @@ anychart.charts.Map = function() {
   if (this.supportsBaseHighlight)
     this.eventsHandler.listen(this, [goog.events.EventType.POINTERDOWN, acgraph.events.EventType.TOUCHSTART], this.tapHandler);
 };
-goog.inherits(anychart.charts.Map, anychart.core.SeparateChart);
+goog.inherits(anychart.charts.Map, anychart.core.ChartWithSeries);
+
+
+/**
+ * Series config for Cartesian chart.
+ * @type {!Object.<string, anychart.core.series.TypeConfig>}
+ */
+anychart.charts.Map.prototype.seriesConfig = (function() {
+  var res = {};
+  var capabilities = (
+      anychart.core.series.Capabilities.ALLOW_INTERACTIVITY |
+      anychart.core.series.Capabilities.ALLOW_POINT_SETTINGS |
+      anychart.core.series.Capabilities.SUPPORTS_MARKERS |
+      anychart.core.series.Capabilities.SUPPORTS_LABELS |
+      0);
+
+  res[anychart.enums.MapSeriesType.CONNECTOR] = {
+    drawerType: anychart.enums.SeriesDrawerTypes.CONNECTOR,
+    shapeManagerType: anychart.enums.ShapeManagerTypes.PER_POINT,
+    shapesConfig: [
+      anychart.core.shapeManagers.pathFillConfig,
+      anychart.core.shapeManagers.pathStrokeConfig,
+      anychart.core.shapeManagers.pathHatchConfig
+    ],
+    secondaryShapesConfig: null,
+    postProcessor: null,
+    capabilities: capabilities
+  };
+  return res;
+})();
+anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.charts.Map, anychart.charts.Map.prototype.seriesConfig);
 
 
 //region --- Class constants
@@ -287,18 +298,15 @@ goog.inherits(anychart.charts.Map, anychart.core.SeparateChart);
  * @type {number}
  */
 anychart.charts.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
-    anychart.core.SeparateChart.prototype.SUPPORTED_CONSISTENCY_STATES |
+    anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES |
     anychart.ConsistencyState.APPEARANCE |
     anychart.ConsistencyState.MAP_SERIES |
     anychart.ConsistencyState.MAP_LABELS |
     anychart.ConsistencyState.MAP_SCALE |
     anychart.ConsistencyState.MAP_GEO_DATA |
     anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
-    anychart.ConsistencyState.MAP_PALETTE |
     anychart.ConsistencyState.MAP_COLOR_RANGE |
     anychart.ConsistencyState.MAP_CALLOUT |
-    anychart.ConsistencyState.MAP_MARKER_PALETTE |
-    anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE |
     anychart.ConsistencyState.MAP_MOVE |
     anychart.ConsistencyState.MAP_ZOOM |
     anychart.ConsistencyState.MAP_AXES |
@@ -311,7 +319,7 @@ anychart.charts.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
  * @type {number}
  */
 anychart.charts.Map.prototype.SUPPORTED_SIGNALS =
-    anychart.core.SeparateChart.prototype.SUPPORTED_SIGNALS |
+    anychart.core.ChartWithSeries.prototype.SUPPORTED_SIGNALS |
     anychart.Signal.NEED_UPDATE_OVERLAP;
 
 
@@ -1770,139 +1778,6 @@ anychart.charts.Map.prototype.onCrosshairSignal_ = function(event) {
 
 
 //endregion
-//region --- Coloring
-//----------------------------------------------------------------------------------------------------------------------
-//
-//  Coloring
-//
-//----------------------------------------------------------------------------------------------------------------------
-/**
- * @param {(anychart.palettes.RangeColors|anychart.palettes.DistinctColors|Object|Array.<string>)=} opt_value .
- * @return {!(anychart.palettes.RangeColors|anychart.palettes.DistinctColors|anychart.charts.Map)} .
- */
-anychart.charts.Map.prototype.palette = function(opt_value) {
-  if (opt_value instanceof anychart.palettes.RangeColors) {
-    this.setupPalette_(anychart.palettes.RangeColors, opt_value);
-    return this;
-  } else if (opt_value instanceof anychart.palettes.DistinctColors) {
-    this.setupPalette_(anychart.palettes.DistinctColors, opt_value);
-    return this;
-  } else if (goog.isObject(opt_value) && opt_value['type'] == 'range') {
-    this.setupPalette_(anychart.palettes.RangeColors);
-  } else if (goog.isObject(opt_value) || this.palette_ == null)
-    this.setupPalette_(anychart.palettes.DistinctColors);
-
-  if (goog.isDef(opt_value)) {
-    this.palette_.setup(opt_value);
-    return this;
-  }
-  return /** @type {!(anychart.palettes.RangeColors|anychart.palettes.DistinctColors)} */(this.palette_);
-};
-
-
-/**
- * Chart markers palette settings.
- * @param {(anychart.palettes.Markers|Object|Array.<anychart.enums.MarkerType>)=} opt_value Chart marker palette settings to set.
- * @return {!(anychart.palettes.Markers|anychart.charts.Map)} Return current chart markers palette or itself for chaining call.
- */
-anychart.charts.Map.prototype.markerPalette = function(opt_value) {
-  if (!this.markerPalette_) {
-    this.markerPalette_ = new anychart.palettes.Markers();
-    this.markerPalette_.listenSignals(this.markerPaletteInvalidated_, this);
-    this.registerDisposable(this.markerPalette_);
-  }
-
-  if (goog.isDef(opt_value)) {
-    this.markerPalette_.setup(opt_value);
-    return this;
-  } else {
-    return this.markerPalette_;
-  }
-};
-
-
-/**
- * Map hatch fill palette settings.
- * @param {(Array.<acgraph.vector.HatchFill.HatchFillType>|Object|anychart.palettes.HatchFills)=} opt_value Chart
- * hatch fill palette settings to set.
- * @return {!(anychart.palettes.HatchFills|anychart.charts.Map)} Return current chart hatch fill palette or itself
- * for chaining call.
- */
-anychart.charts.Map.prototype.hatchFillPalette = function(opt_value) {
-  if (!this.hatchFillPalette_) {
-    this.hatchFillPalette_ = new anychart.palettes.HatchFills();
-    this.hatchFillPalette_.listenSignals(this.hatchFillPaletteInvalidated_, this);
-  }
-
-  if (goog.isDef(opt_value)) {
-    this.hatchFillPalette_.setup(opt_value);
-    return this;
-  } else {
-    return this.hatchFillPalette_;
-  }
-};
-
-
-/**
- * @param {Function} cls Palette constructor.
- * @param {(anychart.palettes.RangeColors|anychart.palettes.DistinctColors)=} opt_cloneFrom Settings to clone from.
- * @private
- */
-anychart.charts.Map.prototype.setupPalette_ = function(cls, opt_cloneFrom) {
-  if (this.palette_ instanceof cls) {
-    if (opt_cloneFrom)
-      this.palette_.setup(opt_cloneFrom);
-  } else {
-    // we dispatch only if we replace existing palette.
-    var doDispatch = !!this.palette_;
-    goog.dispose(this.palette_);
-    this.palette_ = new cls();
-    if (opt_cloneFrom)
-      this.palette_.setup(opt_cloneFrom);
-    this.palette_.listenSignals(this.paletteInvalidated_, this);
-    if (doDispatch)
-      this.invalidate(anychart.ConsistencyState.MAP_PALETTE | anychart.ConsistencyState.CHART_LEGEND, anychart.Signal.NEEDS_REDRAW);
-  }
-};
-
-
-/**
- * Internal palette invalidation handler.
- * @param {anychart.SignalEvent} event Event object.
- * @private
- */
-anychart.charts.Map.prototype.paletteInvalidated_ = function(event) {
-  if (event.hasSignal(anychart.Signal.NEEDS_REAPPLICATION)) {
-    this.invalidate(anychart.ConsistencyState.MAP_PALETTE | anychart.ConsistencyState.CHART_LEGEND, anychart.Signal.NEEDS_REDRAW);
-  }
-};
-
-
-/**
- * Internal marker palette invalidation handler.
- * @param {anychart.SignalEvent} event Event object.
- * @private
- */
-anychart.charts.Map.prototype.markerPaletteInvalidated_ = function(event) {
-  if (event.hasSignal(anychart.Signal.NEEDS_REAPPLICATION)) {
-    this.invalidate(anychart.ConsistencyState.MAP_MARKER_PALETTE | anychart.ConsistencyState.CHART_LEGEND, anychart.Signal.NEEDS_REDRAW);
-  }
-};
-
-
-/**
- * Internal marker palette invalidation handler.
- * @param {anychart.SignalEvent} event Event object.
- * @private
- */
-anychart.charts.Map.prototype.hatchFillPaletteInvalidated_ = function(event) {
-  if (event.hasSignal(anychart.Signal.NEEDS_REAPPLICATION)) {
-    this.invalidate(anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE | anychart.ConsistencyState.CHART_LEGEND, anychart.Signal.NEEDS_REDRAW);
-  }
-};
-
-
-//endregion
 //region --- Series
 //----------------------------------------------------------------------------------------------------------------------
 //
@@ -2516,7 +2391,7 @@ anychart.charts.Map.prototype.geoData = function(opt_data) {
           anychart.ConsistencyState.MAP_SERIES |
           anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
           anychart.ConsistencyState.MAP_COLOR_RANGE |
-          anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE |
+          anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE |
           anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
     }
     return this;
@@ -3988,9 +3863,9 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     this.markConsistent(anychart.ConsistencyState.APPEARANCE);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.MAP_MARKER_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE) &&
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE) &&
+      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE) &&
+      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE) &&
       this.hasInvalidationState(anychart.ConsistencyState.MAP_SERIES)) {
     for (i = this.series_.length; i--;) {
       series = this.series_[i];
@@ -4010,38 +3885,38 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
 
       series.resumeSignalsDispatching(false);
     }
-    this.markConsistent(anychart.ConsistencyState.MAP_PALETTE | anychart.ConsistencyState.MAP_MARKER_PALETTE |
-        anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE | anychart.ConsistencyState.MAP_SERIES);
+    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE | anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE |
+        anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE | anychart.ConsistencyState.MAP_SERIES);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_PALETTE)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE)) {
     for (i = this.series_.length; i--;) {
       series = this.series_[i];
       series.setAutoColor(this.palette().itemAt(/** @type {number} */ (series.index())));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
     this.invalidate(anychart.ConsistencyState.MAP_SERIES);
-    this.markConsistent(anychart.ConsistencyState.MAP_PALETTE);
+    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_MARKER_PALETTE)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE)) {
     for (i = this.series_.length; i--;) {
       series = this.series_[i];
       series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(/** @type {number} */ (series.index()))));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
     this.invalidate(anychart.ConsistencyState.MAP_SERIES);
-    this.markConsistent(anychart.ConsistencyState.MAP_MARKER_PALETTE);
+    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE)) {
     for (i = this.series_.length; i--;) {
       series = this.series_[i];
       series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(/** @type {number} */ (series.index()))));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
     this.invalidate(anychart.ConsistencyState.MAP_SERIES);
-    this.markConsistent(anychart.ConsistencyState.MAP_HATCH_FILL_PALETTE);
+    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.MAP_SERIES)) {
