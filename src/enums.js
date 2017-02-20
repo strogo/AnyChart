@@ -687,6 +687,67 @@ anychart.enums.normalizeLayout = function(value, opt_default) {
 
 
 /**
+ * Legend layout enumeration.
+ * @enum {string}
+ */
+anychart.enums.LegendLayout = {
+  /**
+   * Vertical layout.
+   */
+  VERTICAL: 'vertical',
+  /**
+   * Horizontal layout.
+   */
+  HORIZONTAL: 'horizontal',
+  /**
+   * Places legend items one by one in vertical columns.
+   */
+  VERTICAL_EXPANDABLE: 'verticalexpandable',
+  /**
+   * Places legend items one by one in horizontal rows.
+   */
+  HORIZONTAL_EXPANDABLE: 'horizontalexpandable'
+};
+
+
+/**
+ * Normalizes user input legend layout to its enumeration values. Also accepts null. Defaults to opt_default or 'vertical'.
+ *
+ * @param {*} value - Layout to normalize.
+ * @param {anychart.enums.LegendLayout=} opt_default Orientation to normalize.
+ * @return {anychart.enums.LegendLayout} Normalized orientation.
+ */
+anychart.enums.normalizeLegendLayout = function(value, opt_default) {
+  value = (String(value)).toLowerCase();
+  switch (value) {
+    case 'vertical':
+    case 'v':
+    case 'vert':
+      return anychart.enums.LegendLayout.VERTICAL;
+    case 'horizontal':
+    case 'h':
+    case 'horz':
+    case 'horiz':
+      return anychart.enums.LegendLayout.HORIZONTAL;
+    case 'verticalexpandable':
+    case 'vexpandable':
+    case 'evertical':
+    case 've':
+    case 'vertical_expandable':
+      return anychart.enums.LegendLayout.VERTICAL_EXPANDABLE;
+    case 'horizontalexpandable':
+    case 'expandable':
+    case 'hexpandable':
+    case 'ehorizontal':
+    case 'he':
+    case 'horizontal_expandable':
+      return anychart.enums.LegendLayout.HORIZONTAL_EXPANDABLE;
+  }
+  return opt_default || anychart.enums.LegendLayout.VERTICAL;
+};
+
+
+/**
  * Polar layout enumeration.
  * @enum {string}
  */
@@ -790,6 +851,46 @@ anychart.enums.normalizeOrientation = function(value, opt_default) {
       return anychart.enums.Orientation.LEFT;
   }
   return opt_default || anychart.enums.Orientation.TOP;
+};
+
+
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Position mode.
+//
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * Position mode enumeration.
+ * @enum {string}
+ */
+anychart.enums.LegendPositionMode = {
+  /**
+   * Left orientation.
+   */
+  INSIDE: 'inside',
+  /**
+   * Right orientation.
+   */
+  OUTSIDE: 'outside'
+};
+
+
+/**
+ * Normalizes user input position mode to its enumeration values. Also accepts null. Defaults to opt_default or 'outside'.
+ *
+ * @param {*} value Position mode to normalize.
+ * @param {anychart.enums.LegendPositionMode=} opt_default Position mode to normalize.
+ * @return {anychart.enums.LegendPositionMode} Normalized position mode.
+ */
+anychart.enums.normalizeLegendPositionMode = function(value, opt_default) {
+  value = (String(value)).toLowerCase();
+  switch (value) {
+    case 'inside':
+      return anychart.enums.LegendPositionMode.INSIDE;
+    case 'outside':
+      return anychart.enums.LegendPositionMode.OUTSIDE;
+  }
+  return opt_default || anychart.enums.LegendPositionMode.OUTSIDE;
 };
 
 
@@ -1853,6 +1954,10 @@ anychart.enums.EventType = {
   ANIMATION_END: 'animationend',
   DRILL_CHANGE: 'drillchange',
 
+  ZOOM_START: 'zoomstart',
+  ZOOM: 'zoom',
+  ZOOM_END: 'zoomend',
+
   LEGEND_ITEM_MOUSE_OUT: 'legenditemmouseout',
   LEGEND_ITEM_MOUSE_OVER: 'legenditemmouseover',
   LEGEND_ITEM_MOUSE_MOVE: 'legenditemmousemove',
@@ -1860,6 +1965,10 @@ anychart.enums.EventType = {
   LEGEND_ITEM_MOUSE_UP: 'legenditemmouseup',
   LEGEND_ITEM_CLICK: 'legenditemclick',
   LEGEND_ITEM_DBLCLICK: 'legenditemdblclick',
+
+  DRAG: 'drag',
+  DRAG_START: 'dragstart',
+  DRAG_END: 'dragend',
 
   SCROLL_CHANGE: 'scrollchange',
 
@@ -3070,6 +3179,8 @@ anychart.enums.WarningCode = {
 
   MISSING_PROJ4: 19,
 
+  TOO_MANY_TICKS: 20,
+
   TABLE_ALREADY_IN_TRANSACTION: 101,
 
   STOCK_WRONG_MAPPING: 201,
@@ -3268,7 +3379,28 @@ anychart.enums.normalizeErrorMode = function(value, opt_default) {
  * Horizontal align enum.
  * @enum {string}
  */
-anychart.enums.HAlign = acgraph.vector.Text.HAlign;
+anychart.enums.HAlign = {
+  /**
+   Aligns the text to the left.
+   */
+  LEFT: 'left',
+  /**
+   The same as left if direction is left-to-right and right if direction is right-to-left.
+   */
+  START: 'start',
+  /**
+   The inline contents are centered within the line box.
+   */
+  CENTER: 'center',
+  /**
+   The same as right if direction is left-to-right and left if direction is right-to-left.
+   */
+  END: 'end',
+  /**
+   Aligns the text to the right.
+   */
+  RIGHT: 'right'
+};
 
 
 /**
@@ -3305,7 +3437,19 @@ anychart.enums.normalizeHAlign = function(value) {
  * Vertical align enum.
  * @enum {string}
  */
-anychart.enums.VAlign = acgraph.vector.Text.VAlign;
+anychart.enums.VAlign = {
+  /**
+   vAlign top.
+   */
+  TOP: 'top',
+  /**
+   */
+  MIDDLE: 'middle',
+  /**
+   vAlign bottom.
+   */
+  BOTTOM: 'bottom'
+};
 
 
 /**
@@ -3398,7 +3542,20 @@ anychart.enums.normalizeFontDecoration = function(value) {
  * Font style enumeration.
  * @enum {string}
  */
-anychart.enums.FontStyle = acgraph.vector.Text.FontStyle;
+anychart.enums.FontStyle = {
+  /**
+   Normal.
+   */
+  NORMAL: 'normal',
+  /**
+   Italic.
+   */
+  ITALIC: 'italic',
+  /**
+   Oblique.
+   */
+  OBLIQUE: 'oblique'
+};
 
 
 /**
@@ -3427,7 +3584,16 @@ anychart.enums.normalizeFontStyle = function(value) {
  * Font variant enumeration.
  * @enum {string}
  */
-anychart.enums.FontVariant = acgraph.vector.Text.FontVariant;
+anychart.enums.FontVariant = {
+  /**
+   Leave lovercase as is.
+   */
+  NORMAL: 'normal',
+  /**
+   Make lowercase smaller.
+   */
+  SMALL_CAP: 'small-caps'
+};
 
 
 /**
@@ -3494,7 +3660,16 @@ anychart.enums.normalizeTextDirection = function(value) {
  * Text wrap settings enumeration.
  * @enum {string}
  */
-anychart.enums.TextWrap = acgraph.vector.Text.TextWrap;
+anychart.enums.TextWrap = {
+  /**
+   No wrap.
+   */
+  NO_WRAP: 'noWrap',
+  /**
+   Wrap by symbol.
+   */
+  BY_LETTER: 'byLetter'
+};
 
 
 /**
@@ -3619,6 +3794,30 @@ anychart.enums.normalizeAggregationType = function(value) {
     case 'lastval':
     case 'closevalue':
     case 'closeval':
+    case 'fill':
+    case 'hoverfill':
+    case 'risingfill':
+    case 'hoverrisingfill':
+    case 'fallingfill':
+    case 'hoverfallingfill':
+    case 'stroke':
+    case 'hoverstroke':
+    case 'lowstroke':
+    case 'hoverlowstroke':
+    case 'highstroke':
+    case 'hoverhighstroke':
+    case 'risingstroke':
+    case 'hoverrisingstroke':
+    case 'fallingstroke':
+    case 'hoverfallingstroke':
+    case 'hatchfill':
+    case 'hoverhatchfill':
+    case 'risinghatchfill':
+    case 'hoverrisinghatchfill':
+    case 'fallinghatchfill':
+    case 'hoverfallinghatchfill':
+    case 'marker':
+    case 'hovermarker':
       return anychart.enums.AggregationType.LAST_VALUE;
     case 'sum':
     case 'add':
@@ -4555,7 +4754,32 @@ anychart.enums.StringToken = {
   /**
    * Relative frequency of the point. Used in pareto series.
    */
-  RELATIVE_FREQUENCY: '%RF'
+  RELATIVE_FREQUENCY: '%RF',
+
+  /**
+   * Resource index that holds the activity. Used in Resource charts.
+   */
+  RESOURCE_INDEX: 'resourceIndex',
+
+  /**
+   * Activity index. Used in Resource charts.
+   */
+  ACTIVITY_INDEX: 'activityIndex',
+
+  /**
+   * Activity start date. Used in Resource charts.
+   */
+  START: 'start',
+
+  /**
+   * Activity end date. Used in Resource charts.
+   */
+  END: 'end',
+
+  /**
+   * Activity minutes per day. Used in Resource charts.
+   */
+  MINUTES_PER_DAY: 'minutesPerDay'
 };
 
 
@@ -5719,6 +5943,15 @@ goog.exportSymbol('anychart.enums.Orientation.BOTTOM', anychart.enums.Orientatio
 goog.exportSymbol('anychart.enums.Layout.HORIZONTAL', anychart.enums.Layout.HORIZONTAL);
 goog.exportSymbol('anychart.enums.Layout.VERTICAL', anychart.enums.Layout.VERTICAL);
 
+goog.exportSymbol('anychart.enums.LegendLayout.HORIZONTAL', anychart.enums.LegendLayout.HORIZONTAL);
+goog.exportSymbol('anychart.enums.LegendLayout.VERTICAL', anychart.enums.LegendLayout.VERTICAL);
+goog.exportSymbol('anychart.enums.LegendLayout.HORIZONTAL_EXPANDABLE', anychart.enums.LegendLayout.HORIZONTAL_EXPANDABLE);
+goog.exportSymbol('anychart.enums.LegendLayout.VERTICAL_EXPANDABLE', anychart.enums.LegendLayout.VERTICAL_EXPANDABLE);
+
+
+goog.exportSymbol('anychart.enums.LegendPositionMode.INSIDE', anychart.enums.LegendPositionMode.INSIDE);
+goog.exportSymbol('anychart.enums.LegendPositionMode.OUTSIDE', anychart.enums.LegendPositionMode.OUTSIDE);
+
 goog.exportSymbol('anychart.enums.Sort.NONE', anychart.enums.Sort.NONE);
 goog.exportSymbol('anychart.enums.Sort.ASC', anychart.enums.Sort.ASC);
 goog.exportSymbol('anychart.enums.Sort.DESC', anychart.enums.Sort.DESC);
@@ -5839,6 +6072,9 @@ goog.exportSymbol('anychart.enums.EventType.DRILL_CHANGE', anychart.enums.EventT
 goog.exportSymbol('anychart.enums.EventType.CHART_DRAW', anychart.enums.EventType.CHART_DRAW);
 goog.exportSymbol('anychart.enums.EventType.ANIMATION_START', anychart.enums.EventType.ANIMATION_START);
 goog.exportSymbol('anychart.enums.EventType.ANIMATION_END', anychart.enums.EventType.ANIMATION_END);
+goog.exportSymbol('anychart.enums.EventType.ZOOM_START', anychart.enums.EventType.ZOOM_START);
+goog.exportSymbol('anychart.enums.EventType.ZOOM', anychart.enums.EventType.ZOOM);
+goog.exportSymbol('anychart.enums.EventType.ZOOM_END', anychart.enums.EventType.ZOOM_END);
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_MOUSE_OUT', anychart.enums.EventType.LEGEND_ITEM_MOUSE_OUT);
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_MOUSE_OVER', anychart.enums.EventType.LEGEND_ITEM_MOUSE_OVER);
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_MOUSE_MOVE', anychart.enums.EventType.LEGEND_ITEM_MOUSE_MOVE);
@@ -5846,6 +6082,11 @@ goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_MOUSE_DOWN', anychart.en
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_MOUSE_UP', anychart.enums.EventType.LEGEND_ITEM_MOUSE_UP);
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_CLICK', anychart.enums.EventType.LEGEND_ITEM_CLICK);
 goog.exportSymbol('anychart.enums.EventType.LEGEND_ITEM_DBLCLICK', anychart.enums.EventType.LEGEND_ITEM_DBLCLICK);
+
+goog.exportSymbol('anychart.enums.EventType.DRAG_START', anychart.enums.EventType.DRAG_START);
+goog.exportSymbol('anychart.enums.EventType.DRAG', anychart.enums.EventType.DRAG);
+goog.exportSymbol('anychart.enums.EventType.DRAG_END', anychart.enums.EventType.DRAG_END);
+
 goog.exportSymbol('anychart.enums.EventType.SCROLL_CHANGE', anychart.enums.EventType.SCROLL_CHANGE);
 goog.exportSymbol('anychart.enums.EventType.SPLITTER_CHANGE', anychart.enums.EventType.SPLITTER_CHANGE);
 goog.exportSymbol('anychart.enums.EventType.SIGNAL', anychart.enums.EventType.SIGNAL);
@@ -6185,6 +6426,11 @@ goog.exportSymbol('anychart.enums.StringToken.Y_PERCENT_OF_CATEGORY', anychart.e
 goog.exportSymbol('anychart.enums.StringToken.Y_PERCENT_OF_SERIES', anychart.enums.StringToken.Y_PERCENT_OF_SERIES);
 goog.exportSymbol('anychart.enums.StringToken.Y_PERCENT_OF_TOTAL', anychart.enums.StringToken.Y_PERCENT_OF_TOTAL);
 goog.exportSymbol('anychart.enums.StringToken.Y_VALUE', anychart.enums.StringToken.Y_VALUE);
+goog.exportSymbol('anychart.enums.StringToken.RESOURCE_INDEX', anychart.enums.StringToken.RESOURCE_INDEX);//7.13.0
+goog.exportSymbol('anychart.enums.StringToken.ACTIVITY_INDEX', anychart.enums.StringToken.ACTIVITY_INDEX);//7.13.0
+goog.exportSymbol('anychart.enums.StringToken.START', anychart.enums.StringToken.START);//7.13.0
+goog.exportSymbol('anychart.enums.StringToken.END', anychart.enums.StringToken.END);//7.13.0
+goog.exportSymbol('anychart.enums.StringToken.MINUTES_PER_DAY', anychart.enums.StringToken.MINUTES_PER_DAY);//7.13.0
 
 goog.exportSymbol('anychart.enums.Statistics.AVERAGE', anychart.enums.Statistics.AVERAGE);
 //goog.exportSymbol('anychart.enums.Statistics.AXIS_AVERAGE', anychart.enums.Statistics.AXIS_AVERAGE);

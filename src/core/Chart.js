@@ -59,9 +59,9 @@ anychart.core.Chart = function() {
 
   /**
    * @type {acgraph.vector.Rect}
-   * @private
+   * @protected
    */
-  this.shadowRect_ = null;
+  this.shadowRect = null;
 
   /**
    * @type {anychart.core.utils.Margin}
@@ -153,6 +153,12 @@ anychart.core.Chart = function() {
   this.credits_ = null;
 
   /**
+   * @type {boolean}
+   * @protected
+   */
+  this.allowCreditsDisabling = false;
+
+  /**
    * Rect that serves as an overlay for ignore mouse events mode.
    * @type {acgraph.vector.Rect}
    * @private
@@ -233,6 +239,20 @@ anychart.core.Chart.prototype.supportsTooltip = function() {
  */
 anychart.core.Chart.prototype.getRootElement = function() {
   return this.rootElement;
+};
+
+
+/**
+ * Creates Stage and set up stage's credits with chart's credits values.
+ * @return {!acgraph.vector.Stage}
+ * @protected
+ */
+anychart.core.Chart.prototype.createStage = function() {
+  var stage = acgraph.create();
+  stage.allowCreditsDisabling = this.allowCreditsDisabling;
+
+  stage.credits(this.credits().serialize());
+  return stage;
 };
 
 
@@ -1267,17 +1287,19 @@ anychart.core.Chart.prototype.drawInternal = function() {
   anychart.performance.end('Chart.calculateBounds()');
   anychart.performance.start('Chart.drawContent()');
   this.drawContent(this.contentBounds);
+  this.specialDraw(this.getPlotBounds());
+
   anychart.performance.end('Chart.drawContent()');
 
   // used for crosshair
   var background = this.background();
   var fill = background.getOption('fill');
   if ((!background.enabled() || !fill || fill == 'none')) {
-    if (!this.shadowRect_) {
-      this.shadowRect_ = this.rootElement.rect();
-      this.shadowRect_.fill(anychart.color.TRANSPARENT_HANDLER).stroke(null);
+    if (!this.shadowRect) {
+      this.shadowRect = this.rootElement.rect();
+      this.shadowRect.fill(anychart.color.TRANSPARENT_HANDLER).stroke(null);
     }
-    this.shadowRect_.setBounds(this.contentBounds);
+    this.shadowRect.setBounds(this.contentBounds);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.CHART_LABELS | anychart.ConsistencyState.BOUNDS)) {
@@ -1360,6 +1382,13 @@ anychart.core.Chart.prototype.beforeDraw = function() {};
 anychart.core.Chart.prototype.drawContent = function(bounds) {};
 
 
+/**
+ * Extension point do draw special chart content.
+ * @param {anychart.math.Rect} bounds Chart plot bounds.
+ */
+anychart.core.Chart.prototype.specialDraw = function(bounds) {};
+
+
 //----------------------------------------------------------------------------------------------------------------------
 //
 //  Resize.
@@ -1391,7 +1420,7 @@ anychart.core.Chart.prototype.autoRedraw = function(opt_value) {
  */
 anychart.core.Chart.prototype.resizeHandler = function(evt) {
   if (this.bounds().dependsOnContainerSize()) {
-    this.invalidate(anychart.ConsistencyState.ALL & ~anychart.ConsistencyState.CHART_ANIMATION,
+    this.invalidate(anychart.ConsistencyState.BOUNDS | anychart.ConsistencyState.CHART_LEGEND,
         anychart.Signal.NEEDS_REDRAW | anychart.Signal.BOUNDS_CHANGED);
   }
 };
@@ -1859,7 +1888,7 @@ anychart.core.Chart.prototype.getPoint = goog.abstractMethod;
  *    nearestPointToCursor: (Object.<number>|undefined)
  * }>}
  */
-anychart.core.Chart.prototype.getSeriesStatus;
+anychart.core.Chart.prototype.getSeriesStatus = goog.abstractMethod;
 
 
 /**

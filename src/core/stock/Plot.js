@@ -985,8 +985,9 @@ anychart.core.stock.Plot.prototype.setDefaultGridSettings = function(value) {
 /**
  * Invalidates plot series. Doesn't dispatch anything.
  * @param {boolean} doInvalidateBounds
+ * @param {boolean=} opt_skipLegend
  */
-anychart.core.stock.Plot.prototype.invalidateRedrawable = function(doInvalidateBounds) {
+anychart.core.stock.Plot.prototype.invalidateRedrawable = function(doInvalidateBounds, opt_skipLegend) {
   var i;
 
   var state = anychart.ConsistencyState.SERIES_POINTS;
@@ -1024,7 +1025,8 @@ anychart.core.stock.Plot.prototype.invalidateRedrawable = function(doInvalidateB
   if (doInvalidateBounds) state |= anychart.ConsistencyState.BOUNDS;
   if (this.xAxis_)
     this.xAxis_.invalidate(state);
-  if (this.legend_ && this.legend_.enabled())
+
+  if (!opt_skipLegend && this.legend_ && this.legend_.enabled())
     this.legend_.invalidate(state);
 
   this.invalidate(anychart.ConsistencyState.STOCK_PLOT_SERIES |
@@ -1082,8 +1084,16 @@ anychart.core.stock.Plot.prototype.background = function(opt_value) {
 anychart.core.stock.Plot.prototype.legend = function(opt_value) {
   if (!this.legend_) {
     this.legend_ = new anychart.core.ui.Legend();
+    this.registerDisposable(this.legend_);
     this.legend_.zIndex(200);
     this.legend_.listenSignals(this.onLegendSignal_, this);
+    this.legend_.listen(anychart.enums.EventType.DRAG_START, function(e) {
+      this.chart_.preventHighlight();
+    }, false, this);
+    this.legend_.listen(anychart.enums.EventType.DRAG_END, function(e) {
+      this.chart_.allowHighlight();
+    }, false, this);
+
     this.legend_.setParentEventTarget(this);
   }
 
@@ -1478,7 +1488,7 @@ anychart.core.stock.Plot.prototype.ensureVisualReady_ = function() {
     this.rootLayer_ = acgraph.layer();
     this.bindHandlersToGraphics(this.rootLayer_);
     this.eventsInterceptor_ = this.rootLayer_.rect();
-    this.eventsInterceptor_.zIndex(1000);
+    this.eventsInterceptor_.zIndex(199);
     //this.eventsInterceptor_.cursor(acgraph.vector.Cursor.EW_RESIZE);
     this.eventsInterceptor_.fill(anychart.color.TRANSPARENT_HANDLER);
     this.eventsInterceptor_.stroke(null);
@@ -1522,13 +1532,18 @@ anychart.core.stock.Plot.prototype.ensureBoundsDistributed_ = function() {
     } else {
       legendTitleDate = NaN;
     }
-    this.updateLegend_(seriesBounds, legendTitleDate);
-    // we need forced dispatch signal here to update standalone legend on series enable/disable
-    // we do not worry about it because only standalone legend listens this signal
-    this.dispatchSignal(anychart.Signal.NEED_UPDATE_LEGEND, true);
-    seriesBounds = this.legend().getRemainingBounds();
 
-    if (this.xAxis_) {
+    var legend = /** @type {anychart.core.ui.Legend} */(this.legend());
+    if (legend.positionMode() == anychart.enums.LegendPositionMode.OUTSIDE) {
+      this.updateLegend_(seriesBounds, legendTitleDate);
+      // we need forced dispatch signal here to update standalone legend on series enable/disable
+      // we do not worry about it because only standalone legend listens this signal
+      this.dispatchSignal(anychart.Signal.NEED_UPDATE_LEGEND, true);
+
+      seriesBounds = this.legend().getRemainingBounds();
+    }
+
+    if (this.xAxis_ && this.xAxis_.enabled()) {
       this.xAxis_.suspendSignalsDispatching();
       this.xAxis_.parentBounds(seriesBounds);
       this.xAxis_.resumeSignalsDispatching(false);
@@ -1556,7 +1571,7 @@ anychart.core.stock.Plot.prototype.ensureBoundsDistributed_ = function() {
       }
     }
 
-    if (this.xAxis_) {
+    if (this.xAxis_ && this.xAxis_.enabled()) {
       this.xAxis_.suspendSignalsDispatching();
       // we need this to tell xAxis about new width by Y axes
       this.xAxis_.parentBounds(seriesBounds.left, seriesBounds.top,
@@ -1565,18 +1580,16 @@ anychart.core.stock.Plot.prototype.ensureBoundsDistributed_ = function() {
       seriesBounds = this.xAxis_.getRemainingBounds();
     }
 
-    if (this.legend_ && this.legend_.enabled()) {
-      var legendBounds = seriesBounds.clone();
-      var legendHeight = this.legend_.getPixelBounds().height;
-      legendBounds.top -= legendHeight;
-      legendBounds.height += legendHeight;
-      this.updateLegend_(legendBounds);
-      seriesBounds = this.legend_.getRemainingBounds();
+    if (legend.positionMode() == anychart.enums.LegendPositionMode.INSIDE) {
+      this.updateLegend_(seriesBounds, legendTitleDate);
+      // we need forced dispatch signal here to update standalone legend on series enable/disable
+      // we do not worry about it because only standalone legend listens this signal
+      this.dispatchSignal(anychart.Signal.NEED_UPDATE_LEGEND, true);
     }
 
     this.seriesBounds_ = seriesBounds;
     this.eventsInterceptor_.setBounds(this.seriesBounds_);
-    this.invalidateRedrawable(true);
+    this.invalidateRedrawable(true, true);
     this.markConsistent(anychart.ConsistencyState.BOUNDS | anychart.ConsistencyState.STOCK_PLOT_LEGEND);
   }
 };
@@ -1634,7 +1647,6 @@ anychart.core.stock.Plot.prototype.updateLegend_ = function(opt_seriesBounds, op
   legend.container(this.rootLayer_);
   if (opt_seriesBounds) {
     legend.parentBounds(opt_seriesBounds);
-    legend.width(opt_seriesBounds.width);
   }
   var autoText = this.getLegendAutoText(/** @type {string|Function} */ (legend.titleFormatter()), opt_titleValue);
   if (!goog.isNull(autoText))

@@ -542,7 +542,7 @@ anychart.core.resource.ResourceList.prototype.overlaySignal_ = function(e) {
  * @protected
  */
 anychart.core.resource.ResourceList.prototype.getIterator = function() {
-  return this.target_ ? this.target_.getIterator() : null;
+  return this.target_ ? this.target_.getDataIterator() : null;
 };
 
 
@@ -956,6 +956,8 @@ anychart.core.resource.ResourceList.prototype.draw = function() {
     var rowCount = this.items_.length;
     var lastRow = rowCount - 1;
     this.itemsStrokePath.clear();
+    this.itemsEvenPath.clear();
+    this.itemsOddPath.clear();
 
     for (row = 0; row < rowCount; row++) {
       var isLastRow = row == lastRow;

@@ -151,6 +151,7 @@ anychart.utils.extractTag = function(target) {
  * @return {boolean}
  */
 anychart.utils.checkIfParent = function(parent, target) {
+  if (!parent) return false;
   while (target instanceof goog.events.EventTarget && target != parent) {
     target = target.getParentEventTarget();
   }
@@ -195,7 +196,7 @@ anychart.utils.normalizeSize = function(value, opt_containerSize, opt_invert) {
  * @return {boolean} Is value set in percent.
  */
 anychart.utils.isPercent = function(value) {
-  return goog.isString(value) && goog.string.endsWith(value, '%');
+  return goog.isString(value) && goog.string.endsWith(value, '%') && !isNaN(parseFloat(value));
 };
 
 
@@ -218,17 +219,18 @@ anychart.utils.normalizeNumberOrPercent = function(value, opt_default) {
 /**
  * Normalizes passed value to a percent format string.
  * @param {*} value Value to normalize.
- * @return {string} Normalized to percent format value. If source value doesn't like percent format then trying to
+ * @param {boolean=} opt_canReturnNaN Can return NaN or normalize to '0%'
+ * @return {(string|number)} Normalized to percent format value. If source value doesn't like percent format then trying to
  * convert it. If convert was failed then returns default value ['0%'].
  */
-anychart.utils.normalizeToPercent = function(value) {
+anychart.utils.normalizeToPercent = function(value, opt_canReturnNaN) {
   if (anychart.utils.isPercent(value))
     return /** @type {string} */(value);
 
   if (!goog.isNumber(value))
     value = parseFloat(value);
 
-  if (isNaN(value)) return '0%';
+  if (isNaN(value)) return opt_canReturnNaN ? NaN : '0%';
   return value + '%';
 };
 
@@ -369,7 +371,8 @@ anychart.utils.defaultDateFormatter = function(timestamp) {
 anychart.utils.getCoordinateByAnchor = function(bounds, anchor) {
   var x = bounds.left;
   var y = bounds.top;
-  switch (anychart.enums.normalizeAnchor(anchor)) {
+  var anchorVal = anychart.enums.normalizeAnchor(anchor);
+  switch (anchorVal) {
     case anychart.enums.Anchor.LEFT_TOP:
       break;
     case anychart.enums.Anchor.LEFT_CENTER:
@@ -1547,6 +1550,22 @@ anychart.utils.estimateInterval = function(interval) {
     unit = estimation.unit;
   }
   return {'unit': unit, 'count': count};
+};
+
+
+/**
+ * Returns approximate interval duration in milliseconds.
+ * @param {goog.date.Interval} interval
+ * @return {number}
+ */
+anychart.utils.getIntervalApproxDuration = function(interval) {
+  var result = interval.years; // years
+  result = result * 365.25 + interval.months; // months
+  result = result * 365.25 / 12 + interval.days; // days
+  result = result * 24 + interval.hours; // hours
+  result = result * 60 + interval.minutes; // minutes
+  result = result * 60 + interval.seconds; // seconds
+  return result * 1000; // milliseconds
 };
 
 

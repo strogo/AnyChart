@@ -865,6 +865,7 @@ goog.provide('anychart.themes.defaultTheme');
       'fontSize': 12,
       'textOverflow': '...',
       'itemsLayout': 'horizontal',
+      'positionMode': 'outside',
       'itemsSpacing': 15,
       'items': null,
       'itemsFormatter': null,
@@ -880,7 +881,9 @@ goog.provide('anychart.themes.defaultTheme');
       'align': 'center',
       'padding': {'top': 0, 'right': 10, 'bottom': 10, 'left': 10},
       'margin': {'top': 0, 'right': 0, 'bottom': 0, 'left': 0},
-      'title': {'fontSize': 15},
+      'title': {
+        'fontSize': 15
+      },
       'paginator': {
         'enabled': true,
         'fontSize': 12,
@@ -916,7 +919,10 @@ goog.provide('anychart.themes.defaultTheme');
         'allowLeaveChart': true,
         'title': {'enabled': false}
       },
-      'zIndex': 20
+      'drag': false,
+      'maxWidth': null,
+      'maxHeight': null,
+      'zIndex': 200
     },
 
     'defaultCrosshairLabel': {
@@ -935,6 +941,7 @@ goog.provide('anychart.themes.defaultTheme');
       'text': 'Label text',
       'background': {
         'enabled': true,
+        'disablePointerEvents': true,
         'fill': colorFillBackgroundReversed + opacityStrong,
         'corners': 3,
         'zIndex': 0
@@ -1780,6 +1787,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -1858,6 +1866,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -1944,6 +1953,7 @@ goog.provide('anychart.themes.defaultTheme');
       'scales': [
         {
           'type': 'dateTime',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -1960,6 +1970,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2004,6 +2015,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2057,6 +2069,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2412,6 +2425,7 @@ goog.provide('anychart.themes.defaultTheme');
       'scales': [
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2435,6 +2449,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2515,6 +2530,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2566,6 +2582,7 @@ goog.provide('anychart.themes.defaultTheme');
       'scales': [
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2589,6 +2606,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -2769,6 +2787,7 @@ goog.provide('anychart.themes.defaultTheme');
         },
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -3082,6 +3101,7 @@ goog.provide('anychart.themes.defaultTheme');
         'zIndex': 50
       },
       'geoScale': {
+        'maxTicksCount': 1000,
         'precision': 2
       },
       'callouts': [],
@@ -3175,6 +3195,8 @@ goog.provide('anychart.themes.defaultTheme');
         'keyboardZoomAndMove': true,
         'zoomOnDoubleClick': false
       },
+      'minZoomLevel': 1,
+      'maxZoomLevel': 10,
       'overlapMode': 'noOverlap',
       'crsAnimation': {
         'enabled': true,
@@ -3327,6 +3349,7 @@ goog.provide('anychart.themes.defaultTheme');
       'scales': [
         {
           'type': 'linear',
+          'maxTicksCount': 1000,
           'inverted': false,
           'maximum': null,
           'minimum': null,
@@ -3398,12 +3421,10 @@ goog.provide('anychart.themes.defaultTheme');
             'anchor': 'center'
           },
           'hoverLabel': {
-            'enabled': false,
-            'fontColor': 'yellow'
+            'enabled': null
           },
           'selectLabel': {
-            'enabled': false,
-            'fontColor': 'pink'
+            'enabled': null
           },
           'stroke': returnStrokeSourceColor,
           'hoverStroke': returnLightenStrokeSourceColor,
@@ -4487,7 +4508,7 @@ goog.provide('anychart.themes.defaultTheme');
                         this['dataIntervalUnit'], null, 'full'
                     )));
           },
-          'align': 'center',
+          'align': 'left',
           'padding': {
             'top': 10,
             'right': 10,
@@ -4551,6 +4572,7 @@ goog.provide('anychart.themes.defaultTheme');
         'scales': [
           {
             'type': 'linear',
+            'maxTicksCount': 1000,
             'inverted': false,
             'maximum': null,
             'minimum': null,
@@ -4943,18 +4965,20 @@ goog.provide('anychart.themes.defaultTheme');
           'enabled': true,
           'anchor': 'leftTop',
           'fontColor': '#F4F4F4',
-          'textFormatter': '{%name} ({%hoursPerDayRounded}h)'
+          'textFormatter': '{%name} ({%hoursPerDayRounded}h)',
+          'position': 'leftTop'
         },
+        'hoverLabels': {'enabled': null},
+        'selectLabels': {'enabled': null},
         'fill': '#1976d2',
-        // 'fill': '#0095D8',
-        // 'hoverFill': returnSourceColor,
-        // 'selectFill': returnSourceColor,
+        'hoverFill': returnLightenSourceColor,
+        'selectFill': defaultSelectSolidColor,
         'stroke': null,
-        // 'hoverStroke': returnSourceColor,
-        // 'selectStroke': returnSourceColor,
-        'hatchFill': false
-        // 'hoverHatchFill': null,
-        // 'selectHatchFill': null
+        'hoverStroke': returnSourceColor,
+        'selectStroke': returnSourceColor,
+        'hatchFill': false,
+        'hoverHatchFill': null,
+        'selectHatchFill': null
       },
       'resourceList': {
         'oddFill': 'none',
@@ -5225,6 +5249,24 @@ goog.provide('anychart.themes.defaultTheme');
       'background': {
         'enabled': true,
         'stroke': '#ccc'
+      },
+      'tooltip': {
+        'allowLeaveScreen': false,
+        'allowLeaveChart': true,
+        'displayMode': 'single',
+        'positionMode': 'float',
+        'title': {
+          'enabled': true,
+          'fontSize': 13
+        },
+        'separator': {'enabled': true},
+        'titleFormatter': '{%name}',
+        /** @this {*} */
+        'textFormatter': function() {
+          var format = window['anychart']['format']['date'];
+          return 'Starts: ' + format(this['start']) +
+              '\nEnds: ' + format(this['end']);
+        }
       }
     },
 

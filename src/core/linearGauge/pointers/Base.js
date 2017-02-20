@@ -812,7 +812,7 @@ anychart.core.linearGauge.pointers.Base.prototype.setAutoHatchFill = function(va
  */
 anychart.core.linearGauge.pointers.Base.prototype.width = function(opt_value) {
   if (goog.isDef(opt_value)) {
-    opt_value = anychart.utils.normalizeToPercent(opt_value);
+    opt_value = /** @type {string} */ (anychart.utils.normalizeToPercent(opt_value));
     if (this.width_ != opt_value) {
       this.width_ = opt_value;
       this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW | anychart.Signal.BOUNDS_CHANGED);
@@ -830,7 +830,7 @@ anychart.core.linearGauge.pointers.Base.prototype.width = function(opt_value) {
  */
 anychart.core.linearGauge.pointers.Base.prototype.offset = function(opt_value) {
   if (goog.isDef(opt_value)) {
-    opt_value = anychart.utils.normalizeToPercent(opt_value);
+    opt_value = /** @type {string} */ (anychart.utils.normalizeToPercent(opt_value));
     if (this.offset_ != opt_value) {
       this.offset_ = opt_value;
       this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW | anychart.Signal.BOUNDS_CHANGED);
@@ -1691,10 +1691,10 @@ anychart.core.linearGauge.pointers.Base.prototype.setupByJSON = function(config,
   this.width(config['width']);
   this.offset(config['offset']);
   this.dataIndex(config['dataIndex']);
-  this.label(config['label']);
-  this.hoverLabel(config['hoverLabel']);
-  this.selectLabel(config['selectLabel']);
-  this.legendItem(config['legendItem']);
+  this.label().setup(config['label']);
+  this.hoverLabel().setup(config['hoverLabel']);
+  this.selectLabel().setup(config['selectLabel']);
+  this.legendItem().setup(config['legendItem']);
 
   this.color(config['color']);
   this.fill(config['fill']);
@@ -1759,8 +1759,8 @@ anychart.core.linearGauge.pointers.Base.prototype.disposeInternal = function() {
   proto['selectLabel'] = proto.selectLabel;
   proto['width'] = proto.width;
   proto['offset'] = proto.offset;
-  anychart.core.linearGauge.pointers.Base.prototype['hover'] = anychart.core.linearGauge.pointers.Base.prototype.hoverPoint;
+  proto['hover'] = proto.hoverPoint;
   proto['unhover'] = proto.unhover;
-  anychart.core.linearGauge.pointers.Base.prototype['select'] = anychart.core.linearGauge.pointers.Base.prototype.selectPoint;
+  proto['select'] = proto.selectPoint;
   proto['unselect'] = proto.unselect;
 })();
