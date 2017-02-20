@@ -1892,6 +1892,7 @@ anychart.core.ui.BaseGrid.prototype.drawInternal = function(positionRecalculated
   //---------- Consistency ---------------
   if (this.hasInvalidationState(anychart.ConsistencyState.CONTAINER)) {
     this.base_.parent(container);
+    this.tooltip().containerProvider = this.interactivityHandler.container();
     this.markConsistent(anychart.ConsistencyState.CONTAINER);
   }
 

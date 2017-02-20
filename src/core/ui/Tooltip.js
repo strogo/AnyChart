@@ -129,6 +129,12 @@ anychart.core.ui.Tooltip = function(capability) {
   this.boundsProvider = null;
 
   /**
+   * Container provider;
+   * @type {acgraph.vector.ILayer}
+   */
+  this.containerProvider = null;
+
+  /**
    * Resolution chain cache.
    * @type {?Array.<Object|null|undefined>}
    * @private
@@ -153,7 +159,6 @@ anychart.core.ui.Tooltip.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.ConsistencyState.TOOLTIP_SEPARATOR |
     anychart.ConsistencyState.TOOLTIP_CONTENT |
     anychart.ConsistencyState.TOOLTIP_BACKGROUND |
-    anychart.ConsistencyState.TOOLTIP_ALLOWANCE |
     anychart.ConsistencyState.TOOLTIP_MODE;
 
 
@@ -186,22 +191,10 @@ anychart.core.ui.Tooltip.prototype.SUPPORTED_SIGNALS =
 anychart.core.ui.Tooltip.Capabilities = {
   CAN_CHANGE_DISPLAY_MODE: 1 << 0,
   CAN_CHANGE_POSITION_MODE: 1 << 1,
-  SUPPORTS_ALLOW_LEAVE_CHART: 1 << 2,
-  SUPPORTS_ALLOW_LEAVE_SCREEN: 1 << 3,
   /**
    * Combination of all states.
    */
   ANY: 0xFFFFFFFF
-};
-
-
-/**
- * Allow global tooltip container normalizer.
- * @param {boolean} value - Value.
- * @return {boolean}
- */
-anychart.core.ui.Tooltip.globalTooltipContainerNormalizer = function(value) {
-  return anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER && Boolean(value);
 };
 
 
@@ -328,18 +321,23 @@ anychart.core.ui.Tooltip.prototype.TOOLTIP_SIMPLE_DESCRIPTORS = (function() {
   map['allowLeaveScreen'] = anychart.core.settings.createDescriptor(
       anychart.enums.PropertyHandlerType.SINGLE_ARG,
       'allowLeaveScreen',
-      anychart.core.ui.Tooltip.globalTooltipContainerNormalizer,
-      anychart.ConsistencyState.TOOLTIP_ALLOWANCE,
-      anychart.Signal.NEEDS_REDRAW,
-      anychart.core.ui.Tooltip.Capabilities.SUPPORTS_ALLOW_LEAVE_SCREEN);
+      anychart.core.settings.booleanNormalizer,
+      anychart.ConsistencyState.CONTAINER,
+      anychart.Signal.NEEDS_REDRAW);
 
   map['allowLeaveChart'] = anychart.core.settings.createDescriptor(
       anychart.enums.PropertyHandlerType.SINGLE_ARG,
       'allowLeaveChart',
-      anychart.core.ui.Tooltip.globalTooltipContainerNormalizer,
-      anychart.ConsistencyState.TOOLTIP_ALLOWANCE,
-      anychart.Signal.NEEDS_REDRAW,
-      anychart.core.ui.Tooltip.Capabilities.SUPPORTS_ALLOW_LEAVE_CHART);
+      anychart.core.settings.booleanNormalizer,
+      anychart.ConsistencyState.CONTAINER,
+      anychart.Signal.NEEDS_REDRAW);
+
+  map['allowLeaveStage'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'allowLeaveStage',
+      anychart.core.settings.booleanNormalizer,
+      anychart.ConsistencyState.CONTAINER,
+      anychart.Signal.NEEDS_REDRAW);
 
   map['displayMode'] = anychart.core.settings.createDescriptor(
       anychart.enums.PropertyHandlerType.SINGLE_ARG,
@@ -604,21 +602,17 @@ anychart.core.ui.Tooltip.prototype.draw = function() {
   if (!this.checkDrawingNeeded())
     return this;
 
-  var container = /** @type {acgraph.vector.ILayer} */(this.container());
   var background = /** @type {anychart.core.ui.Background} */(this.background());
   var title = this.title();
   var separator = /** @type {anychart.core.ui.Separator} */(this.separator());
   var content = /** @type {anychart.core.ui.Label} */(this.contentInternal());
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.CONTAINER)) {
-    this.rootLayer_.parent(container);
-    background.container(this.rootLayer_);
-    title.container(this.rootLayer_);
-    separator.container(this.rootLayer_);
-    content.container(this.rootLayer_);
+  background.container(this.rootLayer_);
+  title.container(this.rootLayer_);
+  separator.container(this.rootLayer_);
+  content.container(this.rootLayer_);
 
-    this.markConsistent(anychart.ConsistencyState.CONTAINER);
-  }
+  this.setContainerToTooltip_(this);
 
   if (this.hasInvalidationState(anychart.ConsistencyState.Z_INDEX)) {
     this.rootLayer_.zIndex(/** @type {number} */(this.zIndex()));
@@ -691,10 +685,6 @@ anychart.core.ui.Tooltip.prototype.draw = function() {
     this.markConsistent(anychart.ConsistencyState.TOOLTIP_MODE);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.TOOLTIP_ALLOWANCE)) {
-    this.markConsistent(anychart.ConsistencyState.TOOLTIP_ALLOWANCE);
-  }
-
   return this;
 };
 
@@ -750,6 +740,9 @@ anychart.core.ui.Tooltip.prototype.showAsSingle_ = function(points, clientX, cli
     this.hideChildTooltips_([this.tooltipInUse_]);
   }
 
+  if (!this.tooltipInUse_.rootLayer_.parent()) {
+    this.tooltipInUse_.invalidate(anychart.ConsistencyState.CONTAINER);
+  }
   this.setContainerToTooltip_(this.tooltipInUse_);
   this.setPositionForSingle_(this.tooltipInUse_, clientX, clientY, firstSeries);
   this.tooltipInUse_.showForPosition_(clientX, clientY);
@@ -768,43 +761,43 @@ anychart.core.ui.Tooltip.prototype.setPositionForSingle_ = function(tooltip, cli
   var manager = tooltip.parent() ? tooltip.parent() : this;
 
   var x, y, pixelBounds, anchoredPositionCoordinate;
-  var positionMode = manager.getOption('positionMode') ||
-      anychart.enums.TooltipPositionMode.FLOAT;
+  var positionMode = manager.getOption('positionMode') || anychart.enums.TooltipPositionMode.FLOAT;
 
   var boundsProvider = manager.chart() || this.boundsProvider;
-  var chartPixelBounds = boundsProvider.getPixelBounds();
-  var chartOffset = boundsProvider.container().getStage().getClientPosition();
-  var allowGlobalCont = anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER;
+  var pixelBoundsInStage = boundsProvider.getPixelBounds();
+  var stage = this.containerProvider.getStage();
+  var stageOffset = stage.getClientPosition();
+  var stageBounds = stage.getBounds();
+  var useGlobalCont = tooltip.useGlobalContainer_();
+  var allowLeaveStage = tooltip.getOption('allowLeaveStage');
+  var allowLeaveScreen = tooltip.getOption('allowLeaveScreen');
+  var allowLeaveChart = tooltip.getOption('allowLeaveChart');
+  var offsetX = /** @type {number} */ (tooltip.getOption('offsetX'));
+  var offsetY = /** @type {number} */ (tooltip.getOption('offsetY'));
+
   var position = /** @type {anychart.enums.Position} */(tooltip.getOption('position'));
 
   switch (positionMode) {
     case anychart.enums.TooltipPositionMode.FLOAT:
-      x = allowGlobalCont ? clientX : clientX - chartOffset.x;
-      y = allowGlobalCont ? clientY : clientY - chartOffset.y;
+      x = useGlobalCont ? clientX : clientX - stageOffset.x;
+      y = useGlobalCont ? clientY : clientY - stageOffset.y;
       break;
 
     case anychart.enums.TooltipPositionMode.POINT:
+      //Here opt_series must always be defined.
       var positionProvider = opt_series.createPositionProvider(position, true)['value'];
-      if (opt_series) {
-        x = positionProvider['x'] + (allowGlobalCont ? chartOffset.x : 0);
-        y = positionProvider['y'] + (allowGlobalCont ? chartOffset.y : 0);
-      } else {
-        //Seems like this case must never happen.
-        positionProvider = {'x': clientX, 'y': clientY};
-      }
-      x = positionProvider['x'] + (allowGlobalCont ? chartOffset.x : 0);
-      y = positionProvider['y'] + (allowGlobalCont ? chartOffset.y : 0);
+      x = positionProvider['x'] + (useGlobalCont ? stageOffset.x : 0);
+      y = positionProvider['y'] + (useGlobalCont ? stageOffset.y : 0);
       break;
 
     case anychart.enums.TooltipPositionMode.CHART:
-      anchoredPositionCoordinate =
-          anychart.utils.getCoordinateByAnchor(chartPixelBounds, position);
-      x = anchoredPositionCoordinate.x + (allowGlobalCont ? chartOffset.x : 0);
-      y = anchoredPositionCoordinate.y + (allowGlobalCont ? chartOffset.y : 0);
+      anchoredPositionCoordinate = anychart.utils.getCoordinateByAnchor(pixelBoundsInStage, position);
+      x = anchoredPositionCoordinate.x + (useGlobalCont ? stageOffset.x : 0);
+      y = anchoredPositionCoordinate.y + (useGlobalCont ? stageOffset.y : 0);
       break;
   }
 
-  if (!this.getOption('allowLeaveScreen')) {
+  if (!allowLeaveScreen) {
     // Set position for get actual pixel bounds.
     tooltip['x'](x);
     tooltip['y'](y);
@@ -812,45 +805,68 @@ anychart.core.ui.Tooltip.prototype.setPositionForSingle_ = function(tooltip, cli
     pixelBounds = tooltip.getPixelBounds();
     var windowBox = goog.dom.getViewportSize();
 
-    if (pixelBounds.left < 0) {
-      x -= pixelBounds.left;
+    if (pixelBounds.left < offsetX) {
+      x -= pixelBounds.left - offsetX;
     }
 
-    if (pixelBounds.top < 0) {
-      y -= pixelBounds.top;
+    if (pixelBounds.top < offsetY) {
+      y -= pixelBounds.top - offsetY;
     }
 
-    if (pixelBounds.getRight() > windowBox.width) {
-      x -= pixelBounds.getRight() - windowBox.width;
+    if (pixelBounds.getRight() > windowBox.width + offsetX) {
+      x -= pixelBounds.getRight() - windowBox.width - offsetX;
     }
 
-    if (pixelBounds.getBottom() > windowBox.height) {
-      y -= pixelBounds.getBottom() - windowBox.height;
+    if (pixelBounds.getBottom() > windowBox.height + offsetY) {
+      y -= pixelBounds.getBottom() - windowBox.height - offsetY;
     }
-
   }
 
-  if (!this.getOption('allowLeaveChart')) {
+  if (!allowLeaveStage) {
     // Set position for get actual pixel bounds.
     tooltip['x'](x);
     tooltip['y'](y);
 
     pixelBounds = tooltip.getPixelBounds();
 
-    if (pixelBounds.left < chartOffset.x + chartPixelBounds.left) {
-      x -= pixelBounds.left - chartOffset.x - chartPixelBounds.left;
+    if (pixelBounds.left < offsetX) {
+      x -= pixelBounds.left - offsetX;
     }
 
-    if (pixelBounds.top < chartOffset.y + chartPixelBounds.top) {
-      y -= pixelBounds.top - chartOffset.y - chartPixelBounds.top;
+    if (pixelBounds.top < offsetY) {
+      y -= pixelBounds.top - offsetY;
     }
 
-    if (pixelBounds.getRight() > chartOffset.x + chartPixelBounds.getRight()) {
-      x -= pixelBounds.getRight() - chartOffset.x - chartPixelBounds.getRight();
+    if (pixelBounds.getRight() > stageBounds.width + offsetX) {
+      x -= pixelBounds.getRight() - stageBounds.width - offsetX;
     }
 
-    if (pixelBounds.getBottom() > chartOffset.y + chartPixelBounds.getBottom()) {
-      y -= pixelBounds.getBottom() - chartOffset.y - chartPixelBounds.getBottom();
+    if (pixelBounds.getBottom() > stageBounds.height + offsetY) {
+      y -= pixelBounds.getBottom() - stageBounds.height - offsetY;
+    }
+  }
+
+  if (!allowLeaveChart) {
+    // Set position for get actual pixel bounds.
+    tooltip['x'](x);
+    tooltip['y'](y);
+
+    pixelBounds = tooltip.getPixelBounds();
+
+    if (pixelBounds.left < pixelBoundsInStage.left + offsetX) {
+      x -= pixelBounds.left - offsetX - pixelBoundsInStage.left;
+    }
+
+    if (pixelBounds.top < pixelBoundsInStage.top + offsetY) {
+      y -= pixelBounds.top - offsetY - pixelBoundsInStage.top;
+    }
+
+    if (pixelBounds.getRight() > pixelBoundsInStage.getRight() + offsetX) {
+      x -= pixelBounds.getRight() - offsetX - pixelBoundsInStage.getRight();
+    }
+
+    if (pixelBounds.getBottom() > pixelBoundsInStage.getBottom() + offsetY) {
+      y -= pixelBounds.getBottom() - offsetY - pixelBoundsInStage.getBottom();
     }
   }
 
@@ -942,6 +958,9 @@ anychart.core.ui.Tooltip.prototype.showAsUnion_ = function(points, clientX, clie
 
     this.tooltipInUse_.hideChildTooltips_();
 
+    if (!this.tooltipInUse_.rootLayer_.parent()) {
+      this.tooltipInUse_.invalidate(anychart.ConsistencyState.CONTAINER);
+    }
     this.setContainerToTooltip_(this.tooltipInUse_);
     this.setPositionForSingle_(this.tooltipInUse_, clientX, clientY, hoveredSeries);
     this.tooltipInUse_.showForPosition_(clientX, clientY);
@@ -977,6 +996,9 @@ anychart.core.ui.Tooltip.prototype.showSeparatedChildren_ = function(points, cli
     tooltip.title().autoText(tooltip.getFormattedTitle(contextProvider));
     tooltip.contentInternal().text(tooltip.getFormattedContent_(contextProvider));
 
+    if (!tooltip.rootLayer_.parent()) {
+      tooltip.invalidate(anychart.ConsistencyState.CONTAINER);
+    }
     this.setContainerToTooltip_(tooltip);
     this.setPositionForSeparated_(tooltip, clientX, clientY, series);
     tooltip.showForPosition_(clientX, clientY);
@@ -994,8 +1016,9 @@ anychart.core.ui.Tooltip.prototype.showSeparatedChildren_ = function(points, cli
  * @param {Object=} opt_tooltipContextLoad
  */
 anychart.core.ui.Tooltip.prototype.showForSeriesPoints = function(points, clientX, clientY, hoveredSeries, opt_useUnionAsSingle, opt_tooltipContextLoad) {
-  if (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER &&
-      anychart.core.utils.TooltipsContainer.getInstance().selectable() && !this.check(anychart.core.ui.Tooltip.Capabilities.CAN_CHANGE_DISPLAY_MODE))
+  if (this.useGlobalContainer_() &&
+      anychart.core.utils.TooltipsContainer.getInstance().selectable() &&
+      !this.check(anychart.core.ui.Tooltip.Capabilities.CAN_CHANGE_DISPLAY_MODE))
     return;
 
   if (goog.array.isEmpty(points)) return;
@@ -1021,11 +1044,11 @@ anychart.core.ui.Tooltip.prototype.showForSeriesPoints = function(points, client
 anychart.core.ui.Tooltip.prototype.showForPosition_ = function(clientX, clientY) {
   this.updateForceInvalidation();
 
-  this.setContainerToTooltip_(this);
-
   if (!this.rootLayer_.parent()) {
     this.invalidate(anychart.ConsistencyState.CONTAINER);
   }
+
+  this.setContainerToTooltip_(this);
 
   if (this.delay_ && this.delay_.isActive()) this.delay_.stop();
   this.draw();
@@ -1272,7 +1295,10 @@ anychart.core.ui.Tooltip.prototype.getPixelBounds = function() {
   this.contentBounds_ = null;
   this.instantPosition_ = null;
   this.calculatePosition_(); //also calculate content bounds, because it needs it.
-  return new anychart.math.Rect(this.instantPosition_.x, this.instantPosition_.y, this.contentBounds_.width, this.contentBounds_.height);
+  return new anychart.math.Rect(
+      this.instantPosition_.x - this.padding().left() + /** @type {number} */ (this.getOption('offsetX')),
+      this.instantPosition_.y - this.padding().top() + /** @type {number} */ (this.getOption('offsetY')),
+      this.contentBounds_.width, this.contentBounds_.height);
 };
 
 
@@ -1325,6 +1351,35 @@ anychart.core.ui.Tooltip.prototype.invalidate = function(state, opt_signal) {
 //  Private methods.
 //
 //----------------------------------------------------------------------------------------------------------------------
+/**
+ * Defines whether to use global container instead of local one.
+ * @return {boolean}
+ * @private
+ */
+anychart.core.ui.Tooltip.prototype.useGlobalContainer_ = function() {
+  return anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER &&
+      /** @type {boolean} */ (this.getOption('allowLeaveStage')) &&
+      /** @type {boolean} */ (this.getOption('allowLeaveChart'));
+};
+
+
+// /**
+//  *
+//  * @param {number} x - Initial x coordinate.
+//  * @param {number} y - Initial y coordinate.
+//  * @param {anychart.math.Rect} tooltipBounds - Tooltip bounds.
+//  * @param {anychart.math.Rect} chartBounds - Chart bounds.
+//  * @param {anychart.math.Rect} stageBounds - Stage bounds.
+//  * @param {goog.math.Size} screenSize - Screen size.
+//  * @private
+//  * @return {anychart.math.Coordinate} - Limited coordinate object.
+//  */
+// anychart.core.ui.Tooltip.prototype.limitPosition_ = function(x, y, tooltipBounds, chartBounds, stageBounds, screenSize) {
+//
+//   return {x: x, y: y};
+// };
+
+
 /**
  * Create timer object for hiding with delay, if hiding process has already started,
  * mark timer to recreate after hiding process ends.
@@ -1506,17 +1561,20 @@ anychart.core.ui.Tooltip.prototype.calculatePosition_ = function() {
   this.calculateContentBounds_();
 
   if (!this.instantPosition_) {
-    var anch = /** @type {?string} */ (this.getOption('anchor'));
-    /** @type {goog.math.Coordinate} */
-    var position = new goog.math.Coordinate(
-        /** @type {number} */ (this.getOption('x')),
-        /** @type {number} */ (this.getOption('y')));
+    var anch = /** @type {anychart.enums.Anchor} */ (this.getOption('anchor'));
+    var offsetX = /** @type {number} */ (this.getOption('offsetX'));
+    var offsetY = /** @type {number} */ (this.getOption('offsetY'));
+    var x = /** @type {number} */ (this.getOption('x'));
+    var y = /** @type {number} */ (this.getOption('y'));
+
+    var position = new goog.math.Coordinate(x, y);
+    anychart.utils.applyOffsetByAnchor(position, anch, offsetX, offsetY);
+
+    // var zeroBounds = new anychart.math.Rect(position.x, position.y, this.contentBounds_.width, this.contentBounds_.height);
 
     var anchor = anychart.utils.getCoordinateByAnchor(this.contentBounds_, anch);
     position.x -= anchor.x;
     position.y -= anchor.y;
-    anychart.utils.applyOffsetByAnchor(position, /** @type {anychart.enums.Anchor} */ (anch),
-        /** @type {number} */ (this.getOption('offsetX')), /** @type {number} */ (this.getOption('offsetY')));
     this.instantPosition_ = position;
   }
 };
@@ -1536,37 +1594,37 @@ anychart.core.ui.Tooltip.prototype.setPositionForSeparated_ = function(tooltip, 
 
   var chartPixelBounds, pixelBounds, position, anchoredPositionCoordinate;
   var positionMode = this.getOption('positionMode') || anychart.enums.TooltipPositionMode.FLOAT;
+
   var displayMode = this.getOption('displayMode');
-  var container = this.chart() ? this.chart().container() : this.container();
-  var chartOffset = container.getStage().getClientPosition();
+  var boundsProvider = this.chart() || this.boundsProvider;
+  var pixelBoundsInStage = boundsProvider.getPixelBounds();
+
+  var stage = this.containerProvider.getStage();
+  var stageBounds = stage.getBounds();
+
+  var allowLeaveStage = tooltip.getOption('allowLeaveStage');
+  var allowLeaveScreen = tooltip.getOption('allowLeaveScreen');
+  var allowLeaveChart = tooltip.getOption('allowLeaveChart');
+  var offsetX = /** @type {number} */ (tooltip.getOption('offsetX'));
+  var offsetY = /** @type {number} */ (tooltip.getOption('offsetY'));
 
   if (positionMode == anychart.enums.TooltipPositionMode.FLOAT) {
-    if (!anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER) {
-      x = clientX - chartOffset.x;
-      y = clientY - chartOffset.y;
-    }
-
+    x = clientX;
+    y = clientY;
   } else if (positionMode == anychart.enums.TooltipPositionMode.POINT) {
-    position = displayMode == anychart.enums.TooltipDisplayMode.UNION ?
-        this.getOption('position') : tooltip.getOption('position');
+    position = displayMode == anychart.enums.TooltipDisplayMode.UNION ? this.getOption('position') : tooltip.getOption('position');
     var positionProvider = opt_series.createPositionProvider(/** @type {anychart.enums.Position} */(position), true)['value'];
-    x = positionProvider['x'] +
-        (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER ? chartOffset.x : 0);
-    y = positionProvider['y'] +
-        (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER ? chartOffset.y : 0);
-
+    x = positionProvider['x'];
+    y = positionProvider['y'];
   } else if (positionMode == anychart.enums.TooltipPositionMode.CHART) {
     chartPixelBounds = this.chart().getPixelBounds();
-    position = displayMode == anychart.enums.TooltipDisplayMode.UNION ?
-        this.getOption('position') : tooltip.getOption('position');
+    position = displayMode == anychart.enums.TooltipDisplayMode.UNION ? this.getOption('position') : tooltip.getOption('position');
     anchoredPositionCoordinate = anychart.utils.getCoordinateByAnchor(chartPixelBounds, /** @type {anychart.enums.Position} */(position));
-    x = anchoredPositionCoordinate.x +
-        (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER ? chartOffset.x : 0);
-    y = anchoredPositionCoordinate.y +
-        (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER ? chartOffset.y : 0);
+    x = anchoredPositionCoordinate.x;
+    y = anchoredPositionCoordinate.y;
   }
 
-  if (!this.getOption('allowLeaveScreen')) {
+  if (!allowLeaveScreen) {
     // Set position for get actual pixel bounds.
     tooltip['x'](x);
     tooltip['y'](y);
@@ -1574,51 +1632,66 @@ anychart.core.ui.Tooltip.prototype.setPositionForSeparated_ = function(tooltip, 
     pixelBounds = tooltip.getPixelBounds();
     var windowBox = goog.dom.getViewportSize();
 
-    if (pixelBounds.left < 0) {
-      x -= pixelBounds.left;
+    if (pixelBounds.left < offsetX) {
+      x -= pixelBounds.left - offsetX;
     }
 
-    if (pixelBounds.top < 0) {
-      y -= pixelBounds.top;
+    if (pixelBounds.top < offsetY) {
+      y -= pixelBounds.top - offsetY;
     }
 
-    if (pixelBounds.getRight() > windowBox.width) {
-      x -= pixelBounds.getRight() - windowBox.width;
+    if (pixelBounds.getRight() > windowBox.width + offsetX) {
+      x -= pixelBounds.getRight() - windowBox.width - offsetX;
     }
 
-    if (pixelBounds.getBottom() > windowBox.height) {
-      y -= pixelBounds.getBottom() - windowBox.height;
+    if (pixelBounds.getBottom() > windowBox.height + offsetY) {
+      y -= pixelBounds.getBottom() - windowBox.height - offsetY;
     }
-
   }
 
-  if (!this.getOption('allowLeaveChart')) {
-    // Set position for get actual pixel bounds.
+  if (!allowLeaveStage) {
     tooltip['x'](x);
     tooltip['y'](y);
 
     pixelBounds = tooltip.getPixelBounds();
-    var boundsProvider = this.chart_ || this.boundsProvider;
-    chartPixelBounds = boundsProvider.getPixelBounds();
 
-    if (!chartOffset) {
-      chartOffset = boundsProvider.container().getStage().getClientPosition();
+    if (pixelBounds.left < offsetX) {
+      x -= pixelBounds.left - offsetX;
     }
 
-    if (pixelBounds.left < chartOffset.x + chartPixelBounds.left) {
-      x -= pixelBounds.left - chartOffset.x - chartPixelBounds.left;
+    if (pixelBounds.top < offsetY) {
+      y -= pixelBounds.top - offsetY;
     }
 
-    if (pixelBounds.top < chartOffset.y + chartPixelBounds.top) {
-      y -= pixelBounds.top - chartOffset.y - chartPixelBounds.top;
+    if (pixelBounds.getRight() > stageBounds.width + offsetX) {
+      x -= pixelBounds.getRight() - stageBounds.width - offsetX;
     }
 
-    if (pixelBounds.getRight() > chartOffset.x + chartPixelBounds.getRight()) {
-      x -= pixelBounds.getRight() - chartOffset.x - chartPixelBounds.getRight();
+    if (pixelBounds.getBottom() > stageBounds.height + offsetY) {
+      y -= pixelBounds.getBottom() - stageBounds.height - offsetY;
+    }
+  }
+
+  if (!allowLeaveChart) {
+    tooltip['x'](x);
+    tooltip['y'](y);
+
+    pixelBounds = tooltip.getPixelBounds();
+
+    if (pixelBounds.left < pixelBoundsInStage.left + offsetX) {
+      x -= pixelBounds.left - offsetX - pixelBoundsInStage.left;
     }
 
-    if (pixelBounds.getBottom() > chartOffset.y + chartPixelBounds.getBottom()) {
-      y -= pixelBounds.getBottom() - chartOffset.y - chartPixelBounds.getBottom();
+    if (pixelBounds.top < pixelBoundsInStage.top + offsetY) {
+      y -= pixelBounds.top - offsetY - pixelBoundsInStage.top;
+    }
+
+    if (pixelBounds.getRight() > pixelBoundsInStage.getRight() + offsetX) {
+      x -= pixelBounds.getRight() - offsetX - pixelBoundsInStage.getRight();
+    }
+
+    if (pixelBounds.getBottom() > pixelBoundsInStage.getBottom() + offsetY) {
+      y -= pixelBounds.getBottom() - offsetY - pixelBoundsInStage.getBottom();
     }
   }
 
@@ -1628,19 +1701,33 @@ anychart.core.ui.Tooltip.prototype.setPositionForSeparated_ = function(tooltip, 
 
 
 /**
- * This method was created for resolve bug with Safari 5.1.7
+ * Correctly processes the tooltip's container setup also resolves bug with Safari 5.1.7
  * @param {anychart.core.ui.Tooltip} tooltip
  * @private
  */
 anychart.core.ui.Tooltip.prototype.setContainerToTooltip_ = function(tooltip) {
-  if (!tooltip.container()) {
-    if (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER) {
+  if (tooltip.hasInvalidationState(anychart.ConsistencyState.CONTAINER)) {
+    if (tooltip.useGlobalContainer_()) {
       anychart.core.utils.TooltipsContainer.getInstance().allocTooltip(tooltip);
+      tooltip.rootLayer_.parent(/** @type {acgraph.vector.ILayer} */ (tooltip.container()));
     } else {
-      if (this.chart()) {
-        tooltip.container(/** @type {acgraph.vector.ILayer} */ (this.chart().container()));
-      } else if (this.parent_) {
-        tooltip.container(/** @type {acgraph.vector.ILayer} */ (this.parent_.chart().container()));
+      var provider;
+      if (tooltip.containerProvider) {
+        provider = tooltip.containerProvider;
+      } else if (tooltip.chart()) {
+        provider = tooltip.chart().container();
+      } else if (tooltip.parent()) {
+        if (tooltip.parent().containerProvider) {
+          provider = tooltip.parent().containerProvider;
+        } else if (tooltip.parent().chart()) {
+          provider = tooltip.parent().chart().container();
+        }
+      }
+      if (provider) {
+        var stage = provider.getStage();
+        tooltip.rootLayer_.parent(stage.getTooltipLayer());
+        tooltip.container(/** @type {acgraph.vector.ILayer} */ (provider));
+        tooltip.markConsistent(anychart.ConsistencyState.CONTAINER);
       }
     }
   }
@@ -1742,11 +1829,8 @@ anychart.core.ui.Tooltip.prototype.createTriangle_ = function(x3, y3) {
  */
 anychart.core.ui.Tooltip.prototype.movementOutsideThePoint_ = function(event) {
   if (this.isInTriangle_(event['clientX'], event['clientY'])) {
-
-    if (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER) {
+    if (this.useGlobalContainer_())
       anychart.core.utils.TooltipsContainer.getInstance().selectable(true);
-    }
-
   } else {
     goog.events.unlisten(goog.dom.getDocument(), goog.events.EventType.MOUSEMOVE, this.movementOutsideThePoint_, false, this);
     var domElement = this.rootLayer_.domElement();
@@ -1819,9 +1903,8 @@ anychart.core.ui.Tooltip.prototype.hideSelectable_ = function(event) {
     return true;
   }
 
-  if (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER) {
+  if (this.useGlobalContainer_())
     anychart.core.utils.TooltipsContainer.getInstance().selectable(false);
-  }
 
   if (this.rootLayer_.domElement())
     goog.events.unlisten(this.rootLayer_.domElement(), goog.events.EventType.MOUSELEAVE, this.hideSelectable_, false, this);
@@ -2207,14 +2290,15 @@ anychart.core.ui.Tooltip.prototype.disposeInternal = function() {
   if (this.parent_)
     this.parent_.unlistenSignals(this.parentInvalidated_, this);
 
-  if (anychart.compatibility.ALLOW_GLOBAL_TOOLTIP_CONTAINER) {
-    for (var key in this.childTooltipsMap) {
-      var childTooltip = this.childTooltipsMap[key];
-      if (childTooltip)
-        childTooltip.dispose();
-    }
-    anychart.core.utils.TooltipsContainer.getInstance().release(this);
+  for (var key in this.childTooltipsMap) {
+    var childTooltip = this.childTooltipsMap[key];
+    if (childTooltip)
+      childTooltip.dispose();
   }
+
+  if (this.useGlobalContainer_())
+    anychart.core.utils.TooltipsContainer.getInstance().release(this);
+
   goog.disposeAll(this.title_, this.separator_, this.content_, this.background_, this.padding_, this.rootLayer_, this.delay_);
 
   delete this.title_;

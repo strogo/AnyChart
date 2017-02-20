@@ -1236,6 +1236,7 @@ anychart.core.Chart.prototype.drawInternal = function() {
       this.rootElement.parent(/** @type {acgraph.vector.ILayer} */(this.container()));
     }
 
+    this.tooltip().containerProvider = this.container();
     this.markConsistent(anychart.ConsistencyState.CONTAINER);
   }
 

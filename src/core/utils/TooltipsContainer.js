@@ -139,9 +139,7 @@ anychart.core.utils.TooltipsContainer.prototype.hideTooltips = function(opt_forc
  */
 anychart.core.utils.TooltipsContainer.prototype.selectable = function(opt_value) {
   if (goog.isDef(opt_value)) {
-    if (this.selectable_ != opt_value) {
-      this.selectable_ = opt_value;
-    }
+    this.selectable_ = opt_value;
     return this;
   } else {
     return this.selectable_;

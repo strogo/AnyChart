@@ -744,7 +744,10 @@ goog.provide('anychart.themes.defaultTheme');
       'unionTextFormatter': function() {
         return this['formattedValues'].join('\n');
       },
-      'zIndex': 0
+      'zIndex': 0,
+      'allowLeaveChart': true,
+      'allowLeaveScreen': false,
+      'allowLeaveStage': false
     },
 
     'defaultAxis': {
@@ -909,7 +912,7 @@ goog.provide('anychart.themes.defaultTheme');
       'titleFormatter': null,
       'tooltip': {
         'enabled': false,
-        'allowLeaveScreen': false,
+        'allowLeaveScreen': true,
         'allowLeaveChart': true,
         'title': {'enabled': false}
       },
@@ -1099,8 +1102,8 @@ goog.provide('anychart.themes.defaultTheme');
         'allowMultiSeriesSelection': true
       },
       'tooltip': {
-        'allowLeaveScreen': false,
-        'allowLeaveChart': true,
+        'allowLeaveScreen': true,
+        'allowLeaveChart': false,
         'displayMode': 'single',
         'positionMode': 'float',
         'title': {
@@ -2811,7 +2814,8 @@ goog.provide('anychart.themes.defaultTheme');
          */
         'textFormatter': function() {
           return 'x: ' + this['x'] + '\ny: ' + locNum(this['value']);
-        }
+        },
+        'allowLeaveChart': true
       },
 
       'defaultSeriesSettings': {
@@ -4028,7 +4032,7 @@ goog.provide('anychart.themes.defaultTheme');
           'hAlign': 'left'
         },
         'zIndex': 100,
-        'allowLeaveChart': true
+        'allowLeaveChart': false
       },
       'labels': {
         'enabled': true,
@@ -4170,7 +4174,7 @@ goog.provide('anychart.themes.defaultTheme');
         'backgroundFill': 'none',
         'tooltip': {
           'zIndex': 100,
-          'allowLeaveChart': true
+          'allowLeaveChart': false
         }
       },
       'timeline': {
@@ -4691,8 +4695,8 @@ goog.provide('anychart.themes.defaultTheme');
         }
       },
       'tooltip': {
-        'allowLeaveScreen': false,
-        'allowLeaveChart': true,
+        'allowLeaveScreen': true,
+        'allowLeaveChart': false,
         'displayMode': 'union',
         'positionMode': 'float',
         'title': {
