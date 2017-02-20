@@ -1367,23 +1367,6 @@ anychart.core.ui.Tooltip.prototype.useGlobalContainer_ = function() {
 };
 
 
-// /**
-//  *
-//  * @param {number} x - Initial x coordinate.
-//  * @param {number} y - Initial y coordinate.
-//  * @param {anychart.math.Rect} tooltipBounds - Tooltip bounds.
-//  * @param {anychart.math.Rect} chartBounds - Chart bounds.
-//  * @param {anychart.math.Rect} stageBounds - Stage bounds.
-//  * @param {goog.math.Size} screenSize - Screen size.
-//  * @private
-//  * @return {anychart.math.Coordinate} - Limited coordinate object.
-//  */
-// anychart.core.ui.Tooltip.prototype.limitPosition_ = function(x, y, tooltipBounds, chartBounds, stageBounds, screenSize) {
-//
-//   return {x: x, y: y};
-// };
-
-
 /**
  * Create timer object for hiding with delay, if hiding process has already started,
  * mark timer to recreate after hiding process ends.
