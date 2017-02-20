@@ -784,10 +784,14 @@ anychart.core.ui.Tooltip.prototype.setPositionForSingle_ = function(tooltip, cli
       break;
 
     case anychart.enums.TooltipPositionMode.POINT:
-      //Here opt_series must always be defined.
-      var positionProvider = opt_series.createPositionProvider(position, true)['value'];
-      x = positionProvider['x'] + (useGlobalCont ? stageOffset.x : 0);
-      y = positionProvider['y'] + (useGlobalCont ? stageOffset.y : 0);
+      var positionProvider;
+      if (opt_series) {
+        positionProvider = opt_series.createPositionProvider(position, true)['value'];
+      } else {
+        positionProvider = {'x': clientX, 'y': clientY};
+      }
+      x = positionProvider['x'];
+      y = positionProvider['y'];
       break;
 
     case anychart.enums.TooltipPositionMode.CHART:
