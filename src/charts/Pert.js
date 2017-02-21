@@ -2561,11 +2561,11 @@ anychart.charts.Pert.prototype.drawContent = function(bounds) {
     this.criticalPath().tasks().drawLabels();
   }
 
-  this.tooltip().containerProvider = this.container();
-  this.milestones().tooltip().containerProvider = this.container();
-  this.tasks().tooltip().containerProvider = this.container();
-  this.criticalPath().milestones().tooltip().containerProvider = this.container();
-  this.criticalPath().tasks().tooltip().containerProvider = this.container();
+  this.tooltip().containerProvider(this);
+  this.milestones().tooltip().containerProvider(this);
+  this.tasks().tooltip().containerProvider(this);
+  this.criticalPath().milestones().tooltip().containerProvider(this);
+  this.criticalPath().tasks().tooltip().containerProvider(this);
 
   // if (!this.tooltip().container()) {
   //   this.tooltip().container(/** @type {acgraph.vector.ILayer} */(this.container()));

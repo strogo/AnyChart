@@ -123,16 +123,11 @@ anychart.core.ui.Tooltip = function(capability) {
   this.tooltipInUse_ = null;
 
   /**
-   * Bounds provider if chart is not set.
-   * @type {anychart.core.ui.Legend|anychart.core.VisualBaseWithBounds}
-   */
-  this.boundsProvider = null;
-
-  /**
    * Container provider;
-   * @type {acgraph.vector.ILayer}
+   * @type {anychart.core.ui.Legend|anychart.core.VisualBaseWithBounds}
+   * @private
    */
-  this.containerProvider = null;
+  this.containerProvider_ = null;
 
   /**
    * Resolution chain cache.
@@ -140,10 +135,6 @@ anychart.core.ui.Tooltip = function(capability) {
    * @private
    */
   this.resolutionChainCache_ = null;
-
-  this.rootLayer_ = acgraph.layer();
-  this.registerDisposable(this.rootLayer_);
-  this.bindHandlersToGraphics(this.rootLayer_);
 };
 goog.inherits(anychart.core.ui.Tooltip, anychart.core.VisualBase);
 
@@ -607,15 +598,10 @@ anychart.core.ui.Tooltip.prototype.draw = function() {
   var separator = /** @type {anychart.core.ui.Separator} */(this.separator());
   var content = /** @type {anychart.core.ui.Label} */(this.contentInternal());
 
-  background.container(this.rootLayer_);
-  title.container(this.rootLayer_);
-  separator.container(this.rootLayer_);
-  content.container(this.rootLayer_);
-
   this.setContainerToTooltip_(this);
 
   if (this.hasInvalidationState(anychart.ConsistencyState.Z_INDEX)) {
-    this.rootLayer_.zIndex(/** @type {number} */(this.zIndex()));
+    this.getRootLayer_().zIndex(/** @type {number} */(this.zIndex()));
     this.markConsistent(anychart.ConsistencyState.Z_INDEX);
   }
 
@@ -631,14 +617,14 @@ anychart.core.ui.Tooltip.prototype.draw = function() {
   if (this.hasInvalidationState(anychart.ConsistencyState.TOOLTIP_POSITION)) {
     this.instantPosition_ = null;
     this.calculatePosition_();
-    this.rootLayer_.setTransformationMatrix(1, 0, 0, 1, this.instantPosition_.x, this.instantPosition_.y);
+    this.getRootLayer_().setTransformationMatrix(1, 0, 0, 1, this.instantPosition_.x, this.instantPosition_.y);
     this.markConsistent(anychart.ConsistencyState.TOOLTIP_POSITION);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.TOOLTIP_BACKGROUND)) {
     background.suspendSignalsDispatching();
     background.parentBounds(this.contentBounds_);
-    background.container(this.rootLayer_);
+    background.container(this.getRootLayer_());
     background.draw();
     background.resumeSignalsDispatching(false);
 
@@ -740,7 +726,7 @@ anychart.core.ui.Tooltip.prototype.showAsSingle_ = function(points, clientX, cli
     this.hideChildTooltips_([this.tooltipInUse_]);
   }
 
-  if (!this.tooltipInUse_.rootLayer_.parent()) {
+  if (!this.tooltipInUse_.getRootLayer_().parent()) {
     this.tooltipInUse_.invalidate(anychart.ConsistencyState.CONTAINER);
   }
   this.setContainerToTooltip_(this.tooltipInUse_);
@@ -763,9 +749,9 @@ anychart.core.ui.Tooltip.prototype.setPositionForSingle_ = function(tooltip, cli
   var x, y, pixelBounds, anchoredPositionCoordinate;
   var positionMode = manager.getOption('positionMode') || anychart.enums.TooltipPositionMode.FLOAT;
 
-  var boundsProvider = manager.chart() || this.boundsProvider;
+  var boundsProvider = manager.chart() || this.containerProvider();
   var pixelBoundsInStage = boundsProvider.getPixelBounds();
-  var stage = this.containerProvider.getStage();
+  var stage = boundsProvider.container().getStage();
   var stageOffset = stage.getClientPosition();
   var stageBounds = stage.getBounds();
   var useGlobalCont = tooltip.useGlobalContainer_();
@@ -962,7 +948,7 @@ anychart.core.ui.Tooltip.prototype.showAsUnion_ = function(points, clientX, clie
 
     this.tooltipInUse_.hideChildTooltips_();
 
-    if (!this.tooltipInUse_.rootLayer_.parent()) {
+    if (!this.tooltipInUse_.getRootLayer_().parent()) {
       this.tooltipInUse_.invalidate(anychart.ConsistencyState.CONTAINER);
     }
     this.setContainerToTooltip_(this.tooltipInUse_);
@@ -1000,7 +986,7 @@ anychart.core.ui.Tooltip.prototype.showSeparatedChildren_ = function(points, cli
     tooltip.title().autoText(tooltip.getFormattedTitle(contextProvider));
     tooltip.contentInternal().text(tooltip.getFormattedContent_(contextProvider));
 
-    if (!tooltip.rootLayer_.parent()) {
+    if (!tooltip.getRootLayer_().parent()) {
       tooltip.invalidate(anychart.ConsistencyState.CONTAINER);
     }
     this.setContainerToTooltip_(tooltip);
@@ -1048,7 +1034,7 @@ anychart.core.ui.Tooltip.prototype.showForSeriesPoints = function(points, client
 anychart.core.ui.Tooltip.prototype.showForPosition_ = function(clientX, clientY) {
   this.updateForceInvalidation();
 
-  if (!this.rootLayer_.parent()) {
+  if (!this.getRootLayer_().parent()) {
     this.invalidate(anychart.ConsistencyState.CONTAINER);
   }
 
@@ -1057,7 +1043,7 @@ anychart.core.ui.Tooltip.prototype.showForPosition_ = function(clientX, clientY)
   if (this.delay_ && this.delay_.isActive()) this.delay_.stop();
   this.draw();
 
-  var domElement = this.rootLayer_.domElement();
+  var domElement = this.getRootLayer_().domElement();
 
   // like selectable && enabled
   if (this.getOption('selectable') && domElement) {
@@ -1233,7 +1219,7 @@ anychart.core.ui.Tooltip.prototype.hideSelf = function(opt_force, opt_event) {
     var clientY = opt_event['originalEvent']['clientY'];
     var pixelBounds = this.getPixelBounds();
     var distance = pixelBounds.distance(new goog.math.Coordinate(clientX, clientY));
-    var domElement = this.rootLayer_.domElement();
+    var domElement = this.getRootLayer_().domElement();
 
     // cursor inside the tooltip
     if (domElement && !distance) {
@@ -1245,8 +1231,8 @@ anychart.core.ui.Tooltip.prototype.hideSelf = function(opt_force, opt_event) {
     if (this.isInTriangle_(clientX, clientY)) {
       goog.events.listen(goog.dom.getDocument(), goog.events.EventType.MOUSEMOVE, this.movementOutsideThePoint_, false, this);
       if (domElement) {
-        goog.events.listen(this.rootLayer_.domElement(), goog.events.EventType.MOUSEENTER, this.tooltipEnter_, false, this);
-        goog.events.listen(this.rootLayer_.domElement(), goog.events.EventType.MOUSELEAVE, this.tooltipLeave_, false, this);
+        goog.events.listen(this.getRootLayer_().domElement(), goog.events.EventType.MOUSEENTER, this.tooltipEnter_, false, this);
+        goog.events.listen(this.getRootLayer_().domElement(), goog.events.EventType.MOUSELEAVE, this.tooltipLeave_, false, this);
       }
       return false;
     }
@@ -1267,7 +1253,7 @@ anychart.core.ui.Tooltip.prototype.hideSelf = function(opt_force, opt_event) {
 
 /** @inheritDoc */
 anychart.core.ui.Tooltip.prototype.remove = function() {
-  this.rootLayer_.parent(null);
+  this.getRootLayer_().parent(null);
 };
 
 
@@ -1356,6 +1342,45 @@ anychart.core.ui.Tooltip.prototype.invalidate = function(state, opt_signal) {
 //
 //----------------------------------------------------------------------------------------------------------------------
 /**
+ * Gets/creates root layer.
+ * @return {!acgraph.vector.Layer}
+ * @private
+ */
+anychart.core.ui.Tooltip.prototype.getRootLayer_ = function() {
+  if (!this.rootLayer_) {
+    this.rootLayer_ = acgraph.layer();
+    this.registerDisposable(this.rootLayer_);
+    this.bindHandlersToGraphics(this.rootLayer_);
+
+    var background = /** @type {anychart.core.ui.Background} */(this.background());
+    var title = this.title();
+    var separator = /** @type {anychart.core.ui.Separator} */(this.separator());
+    var content = /** @type {anychart.core.ui.Label} */(this.contentInternal());
+
+    background.container(this.rootLayer_);
+    title.container(this.rootLayer_);
+    separator.container(this.rootLayer_);
+    content.container(this.rootLayer_);
+  }
+  return this.rootLayer_;
+};
+
+
+/**
+ * Gets/sets tooltip container provider.
+ * @param {(anychart.core.ui.Legend|anychart.core.VisualBaseWithBounds)=} opt_value - Value to set.
+ * @return {anychart.core.ui.Tooltip|anychart.core.ui.Legend|anychart.core.VisualBaseWithBounds} - Current value or itself for chaining.
+ */
+anychart.core.ui.Tooltip.prototype.containerProvider = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    this.containerProvider_ = opt_value;
+    return this;
+  }
+  return this.containerProvider_;
+};
+
+
+/**
  * Defines whether to use global container instead of local one.
  * @return {boolean}
  * @private
@@ -1419,7 +1444,7 @@ anychart.core.ui.Tooltip.prototype.calculateContentBounds_ = function() {
     var tooltipWidth = /** @type {(null|number|string|undefined)} */ (this.getOption('width'));
     var tooltipHeight = /** @type {(null|number|string|undefined)} */ (this.getOption('height'));
 
-    var boundsProvider = this.chart_ || this.boundsProvider;
+    var boundsProvider = this.chart_ || this.containerProvider();
     var pixelBounds = boundsProvider.getPixelBounds();
 
     var tooltipPixelWidth = anychart.utils.normalizeSize(tooltipWidth, pixelBounds.width);
@@ -1583,10 +1608,10 @@ anychart.core.ui.Tooltip.prototype.setPositionForSeparated_ = function(tooltip, 
   var positionMode = this.getOption('positionMode') || anychart.enums.TooltipPositionMode.FLOAT;
 
   var displayMode = this.getOption('displayMode');
-  var boundsProvider = this.chart() || this.boundsProvider;
+  var boundsProvider = this.chart() || this.containerProvider();
   var pixelBoundsInStage = boundsProvider.getPixelBounds();
 
-  var stage = this.containerProvider.getStage();
+  var stage = this.containerProvider_.container().getStage();
   var stageBounds = stage.getBounds();
 
   var allowLeaveStage = tooltip.getOption('allowLeaveStage');
@@ -1696,24 +1721,24 @@ anychart.core.ui.Tooltip.prototype.setContainerToTooltip_ = function(tooltip) {
   if (tooltip.hasInvalidationState(anychart.ConsistencyState.CONTAINER)) {
     if (tooltip.useGlobalContainer_()) {
       anychart.core.utils.TooltipsContainer.getInstance().allocTooltip(tooltip);
-      tooltip.rootLayer_.parent(/** @type {acgraph.vector.ILayer} */ (tooltip.container()));
+      tooltip.getRootLayer_().parent(/** @type {acgraph.vector.ILayer} */ (tooltip.container()));
     } else {
-      var provider;
-      if (tooltip.containerProvider) {
-        provider = tooltip.containerProvider;
+      var container;
+      if (tooltip.containerProvider()) {
+        container = tooltip.containerProvider().container();
       } else if (tooltip.chart()) {
-        provider = tooltip.chart().container();
+        container = tooltip.chart().container();
       } else if (tooltip.parent()) {
-        if (tooltip.parent().containerProvider) {
-          provider = tooltip.parent().containerProvider;
+        if (tooltip.parent().containerProvider()) {
+          container = tooltip.parent().containerProvider().container();
         } else if (tooltip.parent().chart()) {
-          provider = tooltip.parent().chart().container();
+          container = tooltip.parent().chart().container();
         }
       }
-      if (provider) {
-        var stage = provider.getStage();
-        tooltip.rootLayer_.parent(stage.getTooltipLayer());
-        tooltip.container(/** @type {acgraph.vector.ILayer} */ (provider));
+      if (container) {
+        var stage = container.getStage();
+        tooltip.getRootLayer_().parent(stage.getTooltipLayer());
+        tooltip.container(/** @type {acgraph.vector.ILayer} */ (container));
         tooltip.markConsistent(anychart.ConsistencyState.CONTAINER);
       }
     }
@@ -1820,7 +1845,7 @@ anychart.core.ui.Tooltip.prototype.movementOutsideThePoint_ = function(event) {
       anychart.core.utils.TooltipsContainer.getInstance().selectable(true);
   } else {
     goog.events.unlisten(goog.dom.getDocument(), goog.events.EventType.MOUSEMOVE, this.movementOutsideThePoint_, false, this);
-    var domElement = this.rootLayer_.domElement();
+    var domElement = this.getRootLayer_().domElement();
     if (domElement) {
       goog.events.unlisten(domElement, goog.events.EventType.MOUSEENTER, this.tooltipEnter_, false, this);
       goog.events.unlisten(domElement, goog.events.EventType.MOUSELEAVE, this.tooltipLeave_, false, this);
@@ -1860,8 +1885,8 @@ anychart.core.ui.Tooltip.prototype.isInTriangle_ = function(clientX, clientY) {
  */
 anychart.core.ui.Tooltip.prototype.tooltipEnter_ = function() {
   goog.events.unlisten(goog.dom.getDocument(), goog.events.EventType.MOUSEMOVE, this.movementOutsideThePoint_, false, this);
-  if (this.rootLayer_.domElement())
-    goog.events.unlisten(this.rootLayer_.domElement(), goog.events.EventType.MOUSEENTER, this.tooltipEnter_, false, this);
+  if (this.getRootLayer_().domElement())
+    goog.events.unlisten(this.getRootLayer_().domElement(), goog.events.EventType.MOUSEENTER, this.tooltipEnter_, false, this);
   this.triangle_ = null;
 };
 
@@ -1871,8 +1896,8 @@ anychart.core.ui.Tooltip.prototype.tooltipEnter_ = function() {
  * @private
  */
 anychart.core.ui.Tooltip.prototype.tooltipLeave_ = function(event) {
-  if (this.rootLayer_.domElement())
-    goog.events.unlisten(this.rootLayer_.domElement(), goog.events.EventType.MOUSELEAVE, this.tooltipLeave_, false, this);
+  if (this.getRootLayer_().domElement())
+    goog.events.unlisten(this.getRootLayer_().domElement(), goog.events.EventType.MOUSELEAVE, this.tooltipLeave_, false, this);
   this.hideSelectable_(event);
 };
 
@@ -1893,8 +1918,8 @@ anychart.core.ui.Tooltip.prototype.hideSelectable_ = function(event) {
   if (this.useGlobalContainer_())
     anychart.core.utils.TooltipsContainer.getInstance().selectable(false);
 
-  if (this.rootLayer_.domElement())
-    goog.events.unlisten(this.rootLayer_.domElement(), goog.events.EventType.MOUSELEAVE, this.hideSelectable_, false, this);
+  if (this.getRootLayer_().domElement())
+    goog.events.unlisten(this.getRootLayer_().domElement(), goog.events.EventType.MOUSELEAVE, this.hideSelectable_, false, this);
   this.triangle_ = null;
 
   if (!this.hideDelay()) {

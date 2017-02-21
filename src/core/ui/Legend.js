@@ -698,7 +698,7 @@ anychart.core.ui.Legend.prototype.tooltip = function(opt_value) {
     this.tooltip_ = new anychart.core.ui.Tooltip(0);
     this.registerDisposable(this.tooltip_);
     this.tooltip_.listenSignals(this.onTooltipSignal_, this);
-    this.tooltip_.boundsProvider = this;
+    this.tooltip_.containerProvider(this);
   }
   if (goog.isDef(opt_value)) {
     this.tooltip_.setup(opt_value);
@@ -1840,8 +1840,6 @@ anychart.core.ui.Legend.prototype.draw = function() {
       this.registerDisposable(this.itemsLayer_);
     }
   }
-
-  this.tooltip().containerProvider = this.container();
 
   if (this.hasInvalidationState(anychart.ConsistencyState.Z_INDEX)) {
     this.rootElement.zIndex(/** @type {number} */ (this.zIndex()));
