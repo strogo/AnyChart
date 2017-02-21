@@ -283,7 +283,6 @@ anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.charts.Map, an
 anychart.charts.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES |
     anychart.ConsistencyState.MAP_APPEARANCE |
-    anychart.ConsistencyState.MAP_SERIES |
     anychart.ConsistencyState.MAP_LABELS |
     anychart.ConsistencyState.MAP_SCALE |
     anychart.ConsistencyState.MAP_GEO_DATA |
@@ -1544,7 +1543,7 @@ anychart.charts.Map.prototype.colorRangeInvalidated_ = function(event) {
   var signal = 0;
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
     state |= anychart.ConsistencyState.MAP_COLOR_RANGE |
-        anychart.ConsistencyState.MAP_SERIES | anychart.ConsistencyState.MAP_APPEARANCE;
+        anychart.ConsistencyState.SERIES_CHART_SERIES | anychart.ConsistencyState.MAP_APPEARANCE;
     signal |= anychart.Signal.NEEDS_REDRAW;
     this.invalidateSeries_();
   }
@@ -1800,7 +1799,7 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
     series.setup(this.defaultSeriesSettings()[type]);
     series.listenSignals(this.seriesInvalidated, this);
     this.invalidate(
-        anychart.ConsistencyState.MAP_SERIES |
+        anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND,
         anychart.Signal.NEEDS_REDRAW);
   } else {
@@ -1829,7 +1828,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
   var state = 0;
 
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
-    state = anychart.ConsistencyState.MAP_SERIES;
+    state = anychart.ConsistencyState.SERIES_CHART_SERIES;
     if ((/** @type {anychart.core.map.series.Base} */(event['target'])).needsUpdateMapAppearance())
       state |= anychart.ConsistencyState.MAP_APPEARANCE;
   }
@@ -1843,7 +1842,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
     state = anychart.ConsistencyState.A11Y;
   }
   if (event.hasSignal(anychart.Signal.DATA_CHANGED)) {
-    state |= anychart.ConsistencyState.MAP_SERIES |
+    state |= anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
         anychart.ConsistencyState.MAP_LABELS;
     if ((/** @type {anychart.core.map.series.Base} */(event['target'])).needsUpdateMapAppearance())
@@ -2122,7 +2121,7 @@ anychart.charts.Map.prototype.geoData = function(opt_data) {
 
       this.invalidate(anychart.ConsistencyState.MAP_SCALE |
           anychart.ConsistencyState.MAP_GEO_DATA |
-          anychart.ConsistencyState.MAP_SERIES |
+          anychart.ConsistencyState.SERIES_CHART_SERIES |
           anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
           anychart.ConsistencyState.MAP_COLOR_RANGE |
           anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE |
@@ -3175,7 +3174,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
 
   this.calculate();
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_SERIES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {
     for (i = this.seriesList.length; i--;) {
       series = this.seriesList[i];
       series.suspendSignalsDispatching();
@@ -3601,7 +3600,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
 
 
     this.invalidateSeries_();
-    this.invalidate(anychart.ConsistencyState.MAP_SERIES);
+    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
 
     this.markConsistent(anychart.ConsistencyState.MAP_APPEARANCE);
   }
@@ -3609,7 +3608,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
   if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE) &&
       this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE) &&
       this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.MAP_SERIES)) {
+      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {
     for (i = this.seriesList.length; i--;) {
       series = this.seriesList[i];
 
@@ -3629,7 +3628,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       series.resumeSignalsDispatching(false);
     }
     this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE | anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE |
-        anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE | anychart.ConsistencyState.MAP_SERIES);
+        anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE | anychart.ConsistencyState.SERIES_CHART_SERIES);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE)) {
@@ -3638,7 +3637,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       series.setAutoColor(this.palette().itemAt(/** @type {number} */ (series.index())));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
-    this.invalidate(anychart.ConsistencyState.MAP_SERIES);
+    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
     this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE);
   }
 
@@ -3648,7 +3647,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(/** @type {number} */ (series.index()))));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
-    this.invalidate(anychart.ConsistencyState.MAP_SERIES);
+    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
     this.markConsistent(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE);
   }
 
@@ -3658,11 +3657,11 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(/** @type {number} */ (series.index()))));
       series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
     }
-    this.invalidate(anychart.ConsistencyState.MAP_SERIES);
+    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
     this.markConsistent(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_SERIES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {
     for (i = this.seriesList.length; i--;) {
       series = this.seriesList[i];
 
@@ -3675,7 +3674,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       series.draw();
       series.resumeSignalsDispatching(false);
     }
-    this.markConsistent(anychart.ConsistencyState.MAP_SERIES);
+    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_SERIES);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.MAP_LABELS)) {
