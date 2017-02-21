@@ -6,7 +6,8 @@
 goog.provide('anychart.modules.connector');
 
 goog.require('anychart.charts.Map');
-goog.require('anychart.core.map.series.Connector');
+goog.require('anychart.core.drawers.map.Connector');
+// goog.require('anychart.core.map.series.Connector');
 goog.require('anychart.modules.base');
 
 

@@ -145,6 +145,7 @@ anychart.core.series.Base = function(chart, plot, type, config) {
 goog.inherits(anychart.core.series.Base, anychart.core.VisualBaseWithBounds);
 
 
+//region --- Class const
 /**
  * Consistency states supported by series.
  * @type {number}
@@ -175,6 +176,7 @@ anychart.core.series.Base.prototype.SUPPORTED_SIGNALS =
     anychart.Signal.NEEDS_UPDATE_A11Y;
 
 
+//endregion
 //region --- Properties
 //----------------------------------------------------------------------------------------------------------------------
 //

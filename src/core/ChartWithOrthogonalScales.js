@@ -94,6 +94,25 @@ anychart.core.ChartWithOrthogonalScales = function(categorizeData) {
 goog.inherits(anychart.core.ChartWithOrthogonalScales, anychart.core.ChartWithSeries);
 
 
+//region --- Static props and methods
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Static props and methods
+//
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * Supported consistency states.
+ * @type {number}
+ */
+anychart.core.ChartWithOrthogonalScales.prototype.SUPPORTED_CONSISTENCY_STATES =
+    anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES |
+    anychart.ConsistencyState.SCALE_CHART_SCALES |
+    anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS |
+    anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+    anychart.ConsistencyState.SCALE_CHART_STATISTICS;
+
+
+//endregion
 //region --- Series specific settings
 //----------------------------------------------------------------------------------------------------------------------
 //
@@ -201,7 +220,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.xScale = function(opt_value) {
       if (this.xScale_)
         this.xScale_.listenSignals(this.xScaleInvalidated, this);
 
-      var state = anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS;
+      var state = anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS;
       if (this.allowLegendCategoriesMode() &&
           this.legend().itemsSourceMode() == anychart.enums.LegendItemsSourceMode.CATEGORIES) {
         state |= anychart.ConsistencyState.CHART_LEGEND;
@@ -228,9 +247,9 @@ anychart.core.ChartWithOrthogonalScales.prototype.xScale = function(opt_value) {
 anychart.core.ChartWithOrthogonalScales.prototype.xScaleInvalidated = function(event) {
   this.suspendSignalsDispatching();
   if (event.hasSignal(anychart.Signal.NEEDS_RECALCULATION)) {
-    var state = anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS;
+    var state = anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS;
     if (this.allowLegendCategoriesMode() &&
         this.legend().itemsSourceMode() == anychart.enums.LegendItemsSourceMode.CATEGORIES) {
       state |= anychart.ConsistencyState.CHART_LEGEND;
@@ -261,7 +280,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.yScale = function(opt_value) {
       if (this.yScale_)
         this.yScale_.listenSignals(this.yScaleInvalidated, this);
 
-      this.invalidate(anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS, anychart.Signal.NEEDS_REDRAW);
+      this.invalidate(anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS, anychart.Signal.NEEDS_REDRAW);
     }
     return this;
   } else {
@@ -282,9 +301,9 @@ anychart.core.ChartWithOrthogonalScales.prototype.yScale = function(opt_value) {
 anychart.core.ChartWithOrthogonalScales.prototype.yScaleInvalidated = function(event) {
   this.suspendSignalsDispatching();
   if (event.hasSignal(anychart.Signal.NEEDS_RECALCULATION))
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS, anychart.Signal.NEEDS_REDRAW);
+    this.invalidate(anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS, anychart.Signal.NEEDS_REDRAW);
   if (event.hasSignal(anychart.Signal.NEEDS_REAPPLICATION))
     this.invalidateSeriesOfScale(this.yScale_);
   this.resumeSignalsDispatching(true);
@@ -346,7 +365,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculate = function() {
  * @protected
  */
 anychart.core.ChartWithOrthogonalScales.prototype.makeScaleMaps = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS)) {
     anychart.performance.start('Scale maps gathering');
     anychart.core.Base.suspendSignalsDispatching(this.seriesList);
     var i, series;
@@ -377,11 +396,11 @@ anychart.core.ChartWithOrthogonalScales.prototype.makeScaleMaps = function() {
           anychart.ConsistencyState.CARTESIAN_ZOOM |
           anychart.ConsistencyState.AXES_CHART_ANNOTATIONS |
           anychart.ConsistencyState.SERIES_CHART_SERIES |
-          anychart.ConsistencyState.SERIES_CHART_SCALES |
-          anychart.ConsistencyState.SERIES_CHART_Y_SCALES);
+          anychart.ConsistencyState.SCALE_CHART_SCALES |
+          anychart.ConsistencyState.SCALE_CHART_Y_SCALES);
     }
     anychart.core.Base.resumeSignalsDispatchingFalse(this.seriesList);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS);
+    this.markConsistent(anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS);
     anychart.performance.end('Scale maps gathering');
   }
 };
@@ -391,7 +410,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.makeScaleMaps = function() {
  * @protected
  */
 anychart.core.ChartWithOrthogonalScales.prototype.calculateXScales = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SCALES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SCALE_CHART_SCALES)) {
     anychart.performance.start('X scales and drawing plan calculation');
     var i, j, series;
     var xScale;
@@ -676,7 +695,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXScales = function() 
       if (xScale.needsAutoCalc())
         xScale.finishAutoCalc();
     }
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_SCALES);
+    this.markConsistent(anychart.ConsistencyState.SCALE_CHART_SCALES);
     anychart.performance.end('X scales and drawing plan calculation');
   }
 };
@@ -686,7 +705,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXScales = function() 
  * @protected
  */
 anychart.core.ChartWithOrthogonalScales.prototype.calculateYScales = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_Y_SCALES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SCALE_CHART_Y_SCALES)) {
     anychart.performance.start('Y scales calculation');
     var i, j, series;
     var yScale;
@@ -924,8 +943,8 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateYScales = function() 
     }
 
 
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_STATISTICS);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_Y_SCALES);
+    this.invalidate(anychart.ConsistencyState.SCALE_CHART_STATISTICS);
+    this.markConsistent(anychart.ConsistencyState.SCALE_CHART_Y_SCALES);
     anychart.performance.end('Y scales calculation');
   }
 };
@@ -935,8 +954,8 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateYScales = function() 
  * Scatter way.
  */
 anychart.core.ChartWithOrthogonalScales.prototype.calculateXYScales = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SCALES |
-          anychart.ConsistencyState.SERIES_CHART_Y_SCALES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SCALE_CHART_SCALES |
+          anychart.ConsistencyState.SCALE_CHART_Y_SCALES)) {
 
     anychart.performance.start('X scales, drawing plans and Y scales calculation');
     anychart.core.Base.suspendSignalsDispatching(this.seriesList);
@@ -1017,10 +1036,10 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXYScales = function()
         yScale.finishAutoCalc();
     }
 
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_STATISTICS);
+    this.invalidate(anychart.ConsistencyState.SCALE_CHART_STATISTICS);
 
     anychart.core.Base.resumeSignalsDispatchingFalse(this.seriesList);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_SCALES | anychart.ConsistencyState.SERIES_CHART_Y_SCALES);
+    this.markConsistent(anychart.ConsistencyState.SCALE_CHART_SCALES | anychart.ConsistencyState.SCALE_CHART_Y_SCALES);
     anychart.performance.end('X scales, drawing plans and Y scales calculation');
   }
 };
@@ -1030,7 +1049,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXYScales = function()
  * Calculates all statistics for the chart.
  */
 anychart.core.ChartWithOrthogonalScales.prototype.calculateStatistics = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_STATISTICS)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.SCALE_CHART_STATISTICS)) {
     anychart.performance.start('Statistics calculation');
 
     this.statistics = {};
@@ -1331,7 +1350,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateStatistics = function
       this.statistics[anychart.enums.Statistics.DATA_PLOT_MIN_X_SUM_SERIES_NAME] = minXSumSeriesName;
     }
 
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_STATISTICS);
+    this.markConsistent(anychart.ConsistencyState.SCALE_CHART_STATISTICS);
     anychart.performance.end('Statistics calculation');
   }
 };

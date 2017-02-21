@@ -83,11 +83,11 @@ goog.inherits(anychart.core.ChartWithAxes, anychart.core.ChartWithOrthogonalScal
 //
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * Supported consistency states. Adds AXES, AXES_MARKERS, GRIDS to anychart.core.ChartWithSeries states.
+ * Supported consistency states. Adds AXES, AXES_MARKERS, GRIDS to anychart.core.ChartWithOrthogonalScales states.
  * @type {number}
  */
 anychart.core.ChartWithAxes.prototype.SUPPORTED_CONSISTENCY_STATES =
-    anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES |
+    anychart.core.ChartWithOrthogonalScales.prototype.SUPPORTED_CONSISTENCY_STATES |
     anychart.ConsistencyState.AXES_CHART_AXES |
     anychart.ConsistencyState.AXES_CHART_AXES_MARKERS |
     anychart.ConsistencyState.AXES_CHART_GRIDS |

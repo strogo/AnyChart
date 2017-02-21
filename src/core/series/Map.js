@@ -1,7 +1,7 @@
-goog.provide('anychart.core.series.Cartesian');
+goog.provide('anychart.core.series.Map');
 goog.require('anychart.core.BubblePoint');
 goog.require('anychart.core.SeriesPoint');
-goog.require('anychart.core.series.Base');
+goog.require('anychart.core.series.Cartesian');
 goog.require('anychart.core.utils.DrawingPlanIterator');
 goog.require('anychart.core.utils.Error');
 goog.require('anychart.core.utils.IInteractiveSeries');
@@ -41,10 +41,7 @@ goog.inherits(anychart.core.series.Map, anychart.core.series.Cartesian);
  * @type {number}
  */
 anychart.core.series.Map.prototype.SUPPORTED_SIGNALS =
-    anychart.core.SeriesBase.prototype.SUPPORTED_SIGNALS |
-    anychart.Signal.DATA_CHANGED |
-    anychart.Signal.NEEDS_RECALCULATION |
-    anychart.Signal.NEED_UPDATE_LEGEND |
+    anychart.core.series.Cartesian.prototype.SUPPORTED_SIGNALS |
     anychart.Signal.NEED_UPDATE_OVERLAP;
 
 
@@ -53,11 +50,9 @@ anychart.core.series.Map.prototype.SUPPORTED_SIGNALS =
  * @type {number}
  */
 anychart.core.series.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
-    anychart.core.SeriesBase.prototype.SUPPORTED_CONSISTENCY_STATES |
+    anychart.core.series.Cartesian.prototype.SUPPORTED_CONSISTENCY_STATES |
     anychart.ConsistencyState.SERIES_HATCH_FILL |
     anychart.ConsistencyState.APPEARANCE |
-    anychart.ConsistencyState.SERIES_LABELS |
-    anychart.ConsistencyState.SERIES_DATA |
     anychart.ConsistencyState.MAP_GEO_DATA_INDEX;
 
 /**

@@ -82,11 +82,7 @@ anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.ConsistencyState.SERIES_CHART_PALETTE |
     anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE |
     anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE |
-    anychart.ConsistencyState.SERIES_CHART_SCALES |
-    anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS |
-    anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-    anychart.ConsistencyState.SERIES_CHART_SERIES |
-    anychart.ConsistencyState.SERIES_CHART_STATISTICS;
+    anychart.ConsistencyState.SERIES_CHART_SERIES;
 
 
 /**
@@ -178,8 +174,8 @@ anychart.core.ChartWithSeries.prototype.normalizeSeriesType = function(type) {
 
 /**
  * Getter/setter for defaultSeriesType.
- * @param {(string|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType)=} opt_value Default series type.
- * @return {anychart.core.ChartWithSeries|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType} Default series type or self for chaining.
+ * @param {(string|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType|anychart.enums.MapSeriesType)=} opt_value Default series type.
+ * @return {anychart.core.ChartWithSeries|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType|anychart.enums.MapSeriesType} Default series type or self for chaining.
  */
 anychart.core.ChartWithSeries.prototype.defaultSeriesType = function(opt_value) {
   if (goog.isDef(opt_value)) {
@@ -256,9 +252,9 @@ anychart.core.ChartWithSeries.prototype.createSeriesByType = function(type, data
         (series.check(anychart.core.drawers.Capabilities.IS_3D_BASED) ? anychart.ConsistencyState.BOUNDS : 0) |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
-        anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS,
+        anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS,
         anychart.Signal.NEEDS_REDRAW);
   } else {
     series = null;
@@ -354,11 +350,12 @@ anychart.core.ChartWithSeries.prototype.removeSeriesAt = function(index) {
     goog.array.splice(this.seriesList, index, 1);
     goog.dispose(series);
     this.invalidate(
+        anychart.ConsistencyState.MAP_APPEARANCE |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
-        anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS,
+        anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS,
         anychart.Signal.NEEDS_REDRAW);
     this.resumeSignalsDispatching(true);
     anychart.globalLock.unlock();
@@ -379,11 +376,12 @@ anychart.core.ChartWithSeries.prototype.removeAllSeries = function() {
     this.seriesList = [];
     goog.disposeAll(series);
     this.invalidate(
+        anychart.ConsistencyState.MAP_APPEARANCE |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
-        anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS,
+        anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS,
         anychart.Signal.NEEDS_REDRAW);
     this.resumeSignalsDispatching(true);
     anychart.globalLock.unlock();
@@ -412,9 +410,9 @@ anychart.core.ChartWithSeries.prototype.seriesInvalidated = function(event) {
     this.annotations().invalidateAnnotations();
   }
   if (event.hasSignal(anychart.Signal.NEEDS_RECALCULATION)) {
-    state |= anychart.ConsistencyState.SERIES_CHART_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_Y_SCALES |
-        anychart.ConsistencyState.SERIES_CHART_SCALE_MAPS;
+    state |= anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS;
   }
   if (event.hasSignal(anychart.Signal.NEED_UPDATE_LEGEND)) {
     state |= anychart.ConsistencyState.CHART_LEGEND;
