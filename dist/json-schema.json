@@ -2257,9 +2257,8 @@
           "type": ["string", "number"]
         },
 
-        "maxZoomLevel": {
-          "type": ["number"]
-        },
+        "maxZoomLevel": {"type": ["number"]},
+        "minZoomLevel": {"type": ["number"]},
 
         "geoIdField": {
           "type": "string"
@@ -4820,6 +4819,7 @@
         "text": {"type": "string"},
         "url": {"type": "string"},
         "alt": {"type": "string"},
+        "imgAlt": {"type": "string"},
         "logoSrc": {"type": "string"},
         "isChart": {"type": "boolean"}
       }
@@ -5326,7 +5326,8 @@
         "centerBottom",
         "rightTop",
         "rightCenter",
-        "rightBottom"
+        "rightBottom",
+        "auto"
       ]
     },
     "anychart.enums.Orientation": {

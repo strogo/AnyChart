@@ -1073,8 +1073,9 @@ goog.provide('anychart.themes.defaultTheme');
 
     'stageCredits': {
       'text': 'AnyChart',
-      'url': 'http://anychart.com',
-      'alt': 'AnyChart.com',
+      'url': 'http://www.anychart.com/?utm_source=registered',
+      'alt': 'AnyChart - JavaScript Charts designed to be embedded and integrated',
+      'imgAlt': 'AnyChart - JavaScript Charts',
       'logoSrc': 'https://static.anychart.com/logo.png'
     },
 
@@ -1168,7 +1169,7 @@ goog.provide('anychart.themes.defaultTheme');
           'hoverHatchFill': null,
           'selectHatchFill': null,
           'labels': {
-            'anchor': 'centerBottom',
+            'anchor': 'auto',
             'position': 'value'
           },
           'hoverLabels': {'enabled': null},
@@ -1244,7 +1245,6 @@ goog.provide('anychart.themes.defaultTheme');
             'iconStroke': 'none'
           },
           'labels': {
-            'anchor': 'centerBottom',
             'offsetY': 3
           }
         },
@@ -1333,9 +1333,6 @@ goog.provide('anychart.themes.defaultTheme');
           'legendItem': {
             'iconStroke': 'none'
           },
-          'labels': {
-            'anchor': 'leftBottom'
-          },
           'stepDirection': 'center'
         },
         'barLike': {
@@ -1346,9 +1343,6 @@ goog.provide('anychart.themes.defaultTheme');
           }
         },
         'lineLike': {
-          'labels': {
-            'anchor': 'leftBottom'
-          },
           'hoverMarkers': {
             'enabled': true
           },
@@ -1398,7 +1392,6 @@ goog.provide('anychart.themes.defaultTheme');
           },
           'labels': {
             'position': 'high',
-            'anchor': 'centerBottom',
             'textFormatter': returnX
           }
         },
@@ -1423,20 +1416,13 @@ goog.provide('anychart.themes.defaultTheme');
           },
           'labels': {
             'position': 'high',
-            'anchor': 'centerBottom',
             'textFormatter': returnX
           }
         },
         'stick': {
-          'labels': {
-            'anchor': 'centerBottom'
-          },
           'stroke': returnStrokeSourceColor1
         },
         'jumpLine': {
-          'labels': {
-            'anchor': 'centerBottom'
-          },
           'pointWidth': '100%'
         }
       },
@@ -1632,8 +1618,7 @@ goog.provide('anychart.themes.defaultTheme');
         'bar': {
           'isVertical': true,
           'labels': {
-            'offsetX': 3,
-            'anchor': 'leftCenter'
+            'offsetY': 3
           },
           'tooltip': {
             'anchor': 'leftTop'
@@ -1654,8 +1639,7 @@ goog.provide('anychart.themes.defaultTheme');
         'rangeBar': {
           'isVertical': true,
           'labels': {
-            'offsetX': 3,
-            'anchor': 'leftCenter'
+            'offsetY': 3
           }
         },
         'box': {
@@ -2369,6 +2353,9 @@ goog.provide('anychart.themes.defaultTheme');
           }
         },
         'bubble': {
+          'labels': {
+            'anchor': 'center'
+          },
           'displayNegative': false,
           'negativeFill': returnDarkenSourceColor,
           'hoverNegativeFill': returnDarkenSourceColor,
@@ -2932,6 +2919,7 @@ goog.provide('anychart.themes.defaultTheme');
           'selectStroke': {'thickness': 0.5, 'color': '#545f69'},
           'hatchFill': false,
           'labels': {
+            'anchor': 'centerBottom',
             'enabled': false,
             'adjustFontSize': {
               'width': true,
@@ -3052,6 +3040,9 @@ goog.provide('anychart.themes.defaultTheme');
           }
         },
         'bubble': {
+          'labels': {
+            'anchor': 'center'
+          },
           'hoverFill': defaultHoverColor,
           'selectFill': defaultSelectColor,
           'tooltip': {
