@@ -70,6 +70,14 @@ anychart.core.series.Map.ZINDEX_HATCH_FILL = 2;
 
 
 //endregion
+//region --- Infrastructure
+/** @inheritDoc */
+anychart.core.series.Map.prototype.getCategoryWidth = function() {
+  return 0;
+};
+
+
+//endregion
 //region --- Class prop
 /**
  * Map of series constructors by type.
@@ -400,6 +408,24 @@ anychart.core.series.Map.prototype.overlapMode = function(opt_value) {
 };
 
 
+/**
+ * Sets drawing labels map.
+ * @param {Array.<boolean>=} opt_value .
+ * @return {anychart.core.SeriesBase|Array.<boolean>}
+ */
+anychart.core.series.Map.prototype.labelsDrawingMap = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    if (!goog.array.equals(this.labelsDrawingMap_, opt_value)) {
+      this.labelsDrawingMap_ = opt_value;
+      this.invalidate(anychart.ConsistencyState.SERIES_LABELS, anychart.Signal.NEEDS_REDRAW);
+    }
+    return this;
+  }
+
+  return this.labelsDrawingMap_;
+};
+
+
 //endregion
 //region --- Check functions
 /** @inheritDoc */
@@ -423,6 +449,32 @@ anychart.core.series.Map.prototype.isChoropleth = function() {
  */
 anychart.core.series.Map.prototype.needDrawHatchFill = function() {
   return false;
+};
+
+
+//endregion
+//region --- Extracting data
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Extracting data
+//
+//----------------------------------------------------------------------------------------------------------------------
+/** @inheritDoc */
+anychart.core.series.Map.prototype.isPointVisible = function(point) {
+  return true;
+};
+
+
+//endregion
+//region --- Data to Pixels transformation
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Data to Pixels transformation
+//
+//----------------------------------------------------------------------------------------------------------------------
+/** @inheritDoc */
+anychart.core.series.Map.prototype.makePointMeta = function(rowInfo, yNames, yColumns) {
+
 };
 
 
@@ -640,62 +692,62 @@ anychart.core.series.Map.prototype.calculate = function() {
  * Draws series into the current container.
  * @return {anychart.core.series.Map} An instance of {@link anychart.core.series.Map} class for method chaining.
  */
-anychart.core.series.Map.prototype.draw = function() {
-  if (!this.checkDrawingNeeded())
-    return this;
-
-  this.calculate();
-
-  this.suspendSignalsDispatching();
-
-  if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS))
-    this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-
-  var iterator = this.getResetIterator();
-
-  this.startDrawing();
-  while (iterator.advance() && this.enabled()) {
-    var index = iterator.getIndex();
-    if (iterator.get('selected') && this.hasInvalidationState(anychart.ConsistencyState.SERIES_DATA))
-      this.state.setPointState(anychart.PointState.SELECT, index);
-
-    this.drawPoint(this.state.getPointStateByIndex(index));
-  }
-  this.finalizeDrawing();
-
-  this.resumeSignalsDispatching(false);
-  this.markConsistent(anychart.ConsistencyState.ALL & ~anychart.ConsistencyState.CONTAINER);
-
-  return this;
-};
+// anychart.core.series.Map.prototype.draw = function() {
+//   if (!this.checkDrawingNeeded())
+//     return this;
+//
+//   this.calculate();
+//
+//   this.suspendSignalsDispatching();
+//
+//   if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS))
+//     this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
+//
+//   var iterator = this.getResetIterator();
+//
+//   this.startDrawing();
+//   while (iterator.advance() && this.enabled()) {
+//     var index = iterator.getIndex();
+//     if (iterator.get('selected') && this.hasInvalidationState(anychart.ConsistencyState.SERIES_DATA))
+//       this.state.setPointState(anychart.PointState.SELECT, index);
+//
+//     this.drawPoint(this.state.getPointStateByIndex(index));
+//   }
+//   this.finalizeDrawing();
+//
+//   this.resumeSignalsDispatching(false);
+//   this.markConsistent(anychart.ConsistencyState.ALL & ~anychart.ConsistencyState.CONTAINER);
+//
+//   return this;
+// };
 
 
 /**
  * Initializes sereis draw.<br/>
  * If scale is not explicitly set - creates a default one.
  */
-anychart.core.series.Map.prototype.startDrawing = function() {
-  if (!this.rootLayer) {
-    if (this.needSelfLayer) {
-      this.rootLayer = acgraph.layer();
-      this.bindHandlersToGraphics(this.rootLayer);
-    } else {
-      this.rootLayer = /** @type {acgraph.vector.ILayer} */ (this.container());
-    }
-  }
-
-  this.checkDrawingNeeded();
-
-  this.labels().suspendSignalsDispatching();
-  this.hoverLabels().suspendSignalsDispatching();
-  this.selectLabels().suspendSignalsDispatching();
-
-  this.labels().clear();
-
-  this.labels().parentBounds(/** @type {anychart.math.Rect} */(this.container().getBounds()));
-
-  this.drawA11y();
-};
+// anychart.core.series.Map.prototype.startDrawing = function() {
+//   if (!this.rootLayer) {
+//     if (this.needSelfLayer) {
+//       this.rootLayer = acgraph.layer();
+//       this.bindHandlersToGraphics(this.rootLayer);
+//     } else {
+//       this.rootLayer = /** @type {acgraph.vector.ILayer} */ (this.container());
+//     }
+//   }
+//
+//   this.checkDrawingNeeded();
+//
+//   this.labels().suspendSignalsDispatching();
+//   this.hoverLabels().suspendSignalsDispatching();
+//   this.selectLabels().suspendSignalsDispatching();
+//
+//   this.labels().clear();
+//
+//   this.labels().parentBounds(/** @type {anychart.math.Rect} */(this.container().getBounds()));
+//
+//   this.drawA11y();
+// };
 
 
 /**
@@ -710,9 +762,9 @@ anychart.core.series.Map.prototype.rootTypedLayerInitializer = goog.abstractMeth
  * Draws a point iterator points to.
  * @param {anychart.PointState|number} pointState Point state.
  */
-anychart.core.series.Map.prototype.drawPoint = function(pointState) {
-  this.drawLabel(pointState);
-};
+// anychart.core.series.Map.prototype.drawPoint = function(pointState) {
+//   this.drawLabel(pointState);
+// };
 
 
 /**
@@ -723,18 +775,18 @@ anychart.core.series.Map.prototype.drawPoint = function(pointState) {
  *   series.drawPoint();
  * series.finalizeDrawing();
  */
-anychart.core.series.Map.prototype.finalizeDrawing = function() {
-  this.labels().container(/** @type {acgraph.vector.ILayer} */(this.rootLayer));
-  this.labels().draw();
-
-  this.labels().resumeSignalsDispatching(false);
-  this.hoverLabels().resumeSignalsDispatching(false);
-  this.selectLabels().resumeSignalsDispatching(false);
-
-  this.labels().markConsistent(anychart.ConsistencyState.ALL);
-  this.hoverLabels().markConsistent(anychart.ConsistencyState.ALL);
-  this.selectLabels().markConsistent(anychart.ConsistencyState.ALL);
-};
+// anychart.core.series.Map.prototype.finalizeDrawing = function() {
+//   this.labels().container(/** @type {acgraph.vector.ILayer} */(this.rootLayer));
+//   this.labels().draw();
+//
+//   this.labels().resumeSignalsDispatching(false);
+//   this.hoverLabels().resumeSignalsDispatching(false);
+//   this.selectLabels().resumeSignalsDispatching(false);
+//
+//   this.labels().markConsistent(anychart.ConsistencyState.ALL);
+//   this.hoverLabels().markConsistent(anychart.ConsistencyState.ALL);
+//   this.selectLabels().markConsistent(anychart.ConsistencyState.ALL);
+// };
 
 
 //endregion
@@ -785,6 +837,12 @@ anychart.core.series.Map.prototype.finalizeDrawing = function() {
 
 //endregion
 //region --- Position and Formating
+/** @inheritDoc */
+anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
+  return this.createFormatProvider();
+};
+
+
 /**
  * Transform coords to pix values.
  * @param {number} xCoord X coordinate.
@@ -800,7 +858,7 @@ anychart.core.series.Map.prototype.transformXY = function(xCoord, yCoord) {
 /** @inheritDoc */
 anychart.core.series.Map.prototype.createFormatProvider = function(opt_force) {
   if (!this.pointProvider || opt_force)
-    this.pointProvider = new anychart.core.utils.MapPointContextProvider(this, this.referenceValueNames);
+    this.pointProvider = new anychart.core.utils.MapPointContextProvider(this, this.getYValueNames());
   this.pointProvider.applyReferenceValues();
 
   return this.pointProvider;
@@ -848,11 +906,11 @@ anychart.core.series.Map.prototype.getPositionByRegion = function() {
  */
 anychart.core.series.Map.prototype.getReferenceScaleValues = function() {
   if (!this.enabled()) return null;
+  var refValues = this.getYValueNames();
   var res = [];
   var iterator = this.getIterator();
-  for (var i = 0, len = this.referenceValueNames.length; i < len; i++) {
-    if (this.referenceValueMeanings[i] != 'y') continue;
-    var val = iterator.get(this.referenceValueNames[i]);
+  for (var i = 0, len = refValues.length; i < len; i++) {
+    var val = iterator.get(refValues[i]);
     if (anychart.utils.isNaN(val)) return null;
     res.push(val);
   }

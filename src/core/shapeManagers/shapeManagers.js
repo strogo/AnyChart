@@ -874,3 +874,17 @@ anychart.core.shapeManagers.pathScrollerSelectFillStrokeConfig = {
   isHatchFill: false,
   zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX
 };
+
+
+/**
+ * Template shape config for easy reusage.
+ * @const {anychart.core.shapeManagers.ShapeConfig}
+ */
+anychart.core.shapeManagers.pathMapConnectorEventHandlerConfig = {
+  name: 'eventHandler',
+  shapeType: anychart.enums.ShapeType.PATH,
+  fillNames: null,
+  strokeNames: null,
+  isHatchFill: false,
+  zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX
+};

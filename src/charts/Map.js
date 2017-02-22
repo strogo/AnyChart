@@ -262,9 +262,9 @@ anychart.charts.Map.prototype.seriesConfig = (function() {
     drawerType: anychart.enums.SeriesDrawerTypes.CONNECTOR,
     shapeManagerType: anychart.enums.ShapeManagerTypes.PER_POINT,
     shapesConfig: [
-      anychart.core.shapeManagers.pathFillConfig,
-      anychart.core.shapeManagers.pathStrokeConfig,
-      anychart.core.shapeManagers.pathHatchConfig
+      anychart.core.shapeManagers.pathFillStrokeConfig,
+      anychart.core.shapeManagers.pathHatchConfig,
+      anychart.core.shapeManagers.pathMapConnectorEventHandlerConfig
     ],
     secondaryShapesConfig: null,
     postProcessor: null,
@@ -1780,6 +1780,7 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
     series.autoIndex(index);
 
     series.setAutoZIndex(anychart.charts.Map.ZINDEX_SERIES + inc);
+    series.data(data, opt_csvSettings);
     series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
 
     series.setAutoGeoIdField(this.geoIdField());
@@ -2036,11 +2037,11 @@ anychart.charts.Map.prototype.geoScaleInvalidated_ = function(event) {
 
 
 /** @inheritDoc */
-anychart.charts.Map.prototype.xScale = goog.abstractMethod;
+anychart.charts.Map.prototype.xScale = goog.nullFunction;
 
 
 /** @inheritDoc */
-anychart.charts.Map.prototype.yScale = goog.abstractMethod;
+anychart.charts.Map.prototype.yScale = goog.nullFunction;
 
 
 /**
