@@ -6,7 +6,8 @@ goog.require('anychart.core.utils.DrawingPlanIterator');
 goog.require('anychart.core.utils.Error');
 goog.require('anychart.core.utils.IInteractiveSeries');
 goog.require('anychart.core.utils.InteractivityState');
-goog.require('anychart.core.utils.SeriesPointContextProvider');
+goog.require('anychart.core.utils.MapConnectorPointContextProvider');
+goog.require('anychart.core.utils.MapPointContextProvider');
 goog.require('anychart.data');
 goog.require('anychart.enums');
 goog.require('anychart.utils');
@@ -270,6 +271,47 @@ anychart.core.series.Map.prototype.setGeoData = function(geoData) {
 //endregion
 //region --- Labels
 /**
+ * Gets label position.
+ * @param {anychart.PointState|number} pointState Point state - normal, hover or select.
+ * @return {string} Position settings.
+ */
+anychart.core.series.Map.prototype.getLabelsPosition = function(pointState) {
+  var selected = this.state.isStateContains(pointState, anychart.PointState.SELECT);
+  var hovered = !selected && this.state.isStateContains(pointState, anychart.PointState.HOVER);
+
+  var iterator = this.getIterator();
+
+  var pointLabel = iterator.get('label');
+  var hoverPointLabel = hovered ? iterator.get('hoverLabel') : null;
+  var selectPointLabel = selected ? iterator.get('selectLabel') : null;
+
+  var labelPosition = pointLabel && pointLabel['position'] ? pointLabel['position'] : null;
+  var labelHoverPosition = hoverPointLabel && hoverPointLabel['position'] ? hoverPointLabel['position'] : null;
+  var labelSelectPosition = selectPointLabel && selectPointLabel['position'] ? selectPointLabel['position'] : null;
+
+  return hovered || selected ?
+      hovered ?
+          labelHoverPosition ?
+              labelHoverPosition :
+              this.hoverLabels().position() ?
+                  this.hoverLabels().position() :
+                  labelPosition ?
+                      labelPosition :
+                      this.labels().position() :
+          labelSelectPosition ?
+              labelSelectPosition :
+              this.selectLabels().position() ?
+                  this.selectLabels().position() :
+                  labelPosition ?
+                      labelPosition :
+                      this.labels().position() :
+      labelPosition ?
+          labelPosition :
+          this.labels().position();
+};
+
+
+/**
  * Returns label bounds.
  * @param {number} index Point index.
  * @param {number=} opt_pointState Point state.
@@ -317,7 +359,7 @@ anychart.core.series.Map.prototype.getLabelBounds = function(index, opt_pointSta
   if (isDraw) {
     var position = this.getLabelsPosition(pointState);
 
-    var positionProvider = this.createLabelsPositionProvider(/** @type {anychart.enums.Position|string} */(position));
+    var positionProvider = this.createPositionProvider(/** @type {anychart.enums.Position|string} */(position));
     var formatProvider = this.createFormatProvider(true);
 
     var settings = {};
@@ -545,9 +587,11 @@ anychart.core.series.Map.prototype.updateOnZoomOrMove = function() {
  */
 anychart.core.series.Map.prototype.applyZoomMoveTransformToLabel = function(label, pointState) {
   var domElement, prevPos, newPos, trX, trY, selfTx;
+  var scale, dx, dy, prevTx, tx;
+
+  var iterator = this.getIterator();
 
   domElement = label.getDomElement();
-  var iterator = this.getIterator();
 
   var position = this.getLabelsPosition(pointState);
   var positionProvider = this.createPositionProvider(position);
@@ -575,9 +619,8 @@ anychart.core.series.Map.prototype.applyZoomMoveTransformToLabel = function(labe
 
   var connectorElement = label.getConnectorElement();
   if (connectorElement && iterator.meta('positionMode') != anychart.enums.MapPointOutsidePositionMode.OFFSET) {
-    var scale, dx, dy;
-    var prevTx = this.map.mapTx;
-    var tx = this.map.getMapLayer().getFullTransformation().clone();
+    prevTx = this.map.mapTx;
+    tx = this.map.getMapLayer().getFullTransformation().clone();
 
     if (prevTx) {
       tx.concatenate(prevTx.createInverse());
@@ -608,16 +651,121 @@ anychart.core.series.Map.prototype.applyZoomMoveTransformToLabel = function(labe
 
 
 /**
+ * Applying zoom and move transformations to marker element.
+ * @param {anychart.core.ui.MarkersFactory.Marker} marker .
+ * @param {number} pointState .
+ */
+anychart.core.series.Map.prototype.applyZoomMoveTransformToMarker = function(marker, pointState) {
+  var prevPos, newPos, trX, trY, selfTx;
+
+  var domElement = marker.getDomElement();
+  var iterator = this.getIterator();
+
+  var position = this.getMarkersPosition(pointState);
+  var positionProvider = this.createPositionProvider(/** @type {string} */(position));
+
+  var markerRotation = marker.getFinalSettings('rotation');
+  if (!goog.isDef(markerRotation) || goog.isNull(markerRotation) || isNaN(markerRotation)) {
+    markerRotation = iterator.meta('markerRotation');
+  }
+
+  var markerAnchor = marker.getFinalSettings('anchor');
+  if (!goog.isDef(markerAnchor) || goog.isNull(markerAnchor)) {
+    markerAnchor = iterator.meta('markerAnchor');
+  }
+
+  if (goog.isDef(markerRotation))
+    domElement.rotateByAnchor(-markerRotation, /** @type {anychart.enums.Anchor} */(markerAnchor));
+
+  prevPos = marker.positionProvider()['value'];
+  newPos = positionProvider['value'];
+
+  selfTx = domElement.getSelfTransformation();
+
+  trX = -selfTx.getTranslateX() + newPos['x'] - prevPos['x'];
+  trY = -selfTx.getTranslateY() + newPos['y'] - prevPos['y'];
+
+  domElement.translate(trX, trY);
+
+  if (goog.isDef(markerRotation))
+    domElement.rotateByAnchor(/** @type {number}*/(markerRotation), /** @type {anychart.enums.Anchor} */(markerAnchor));
+};
+
+
+/**
  * Applying zoom and move transformations to series elements for improve performans.
  */
 anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
+  var domElement, prevPos, newPos, trX, trY, selfTx;
+  var scale, dx, dy, prevTx, tx;
+  var isDraw, labelsFactory, pointLabel, stateLabel, labelEnabledState, stateLabelEnabledState;
+
   var iterator = this.getIterator();
   var index = iterator.getIndex();
+
   var pointState = this.state.getPointStateByIndex(index);
   var selected = this.state.isStateContains(pointState, anychart.PointState.SELECT);
   var hovered = !selected && this.state.isStateContains(pointState, anychart.PointState.HOVER);
 
-  var isDraw, labelsFactory, pointLabel, stateLabel, labelEnabledState, stateLabelEnabledState;
+  var paths = iterator.meta('shapes');
+  if (paths) {
+    prevTx = this.chart.mapTx;
+    tx = this.chart.getMapLayer().getFullTransformation().clone();
+
+    if (prevTx) {
+      tx.concatenate(prevTx.createInverse());
+    }
+
+    scale = tx.getScaleX();
+    dx = tx.getTranslateX();
+    dy = tx.getTranslateY();
+
+    goog.object.forEach(paths, function(path) {
+      path.setTransformationMatrix(scale, 0, 0, scale, dx, dy);
+    });
+  }
+
+  var pointMarker = iterator.get('marker');
+  var hoverPointMarker = iterator.get('hoverMarker');
+  var selectPointMarker = iterator.get('selectMarker');
+
+  var marker = this.markers_.getMarker(index);
+
+  var markerEnabledState = pointMarker && goog.isDef(pointMarker['enabled']) ? pointMarker['enabled'] : null;
+  var markerHoverEnabledState = hoverPointMarker && goog.isDef(hoverPointMarker['enabled']) ? hoverPointMarker['enabled'] : null;
+  var markerSelectEnabledState = selectPointMarker && goog.isDef(selectPointMarker['enabled']) ? selectPointMarker['enabled'] : null;
+
+  isDraw = hovered || selected ?
+      hovered ?
+          goog.isNull(markerHoverEnabledState) ?
+              this.hoverMarkers_ && goog.isNull(this.hoverMarkers_.enabled()) ?
+                  goog.isNull(markerEnabledState) ?
+                      this.markers_.enabled() :
+                      markerEnabledState :
+                  this.hoverMarkers_.enabled() :
+              markerHoverEnabledState :
+          goog.isNull(markerSelectEnabledState) ?
+              this.selectMarkers_ && goog.isNull(this.selectMarkers_.enabled()) ?
+                  goog.isNull(markerEnabledState) ?
+                      this.markers_.enabled() :
+                      markerEnabledState :
+                  this.selectMarkers_.enabled() :
+              markerSelectEnabledState :
+      goog.isNull(markerEnabledState) ?
+          this.markers_.enabled() :
+          markerEnabledState;
+
+  if (isDraw) {
+    if (marker && marker.getDomElement() && marker.positionProvider()) {
+      this.applyZoomMoveTransformToMarker(marker, pointState);
+    }
+  }
+
+
+
+
+
+
 
   pointLabel = iterator.get('label');
   labelEnabledState = pointLabel && goog.isDef(pointLabel['enabled']) ? pointLabel['enabled'] : null;
@@ -837,6 +985,42 @@ anychart.core.series.Map.prototype.rootTypedLayerInitializer = goog.abstractMeth
 
 //endregion
 //region --- Position and Formating
+/**
+ * @return {!anychart.core.utils.SeriesPointContextProvider}
+ */
+anychart.core.series.Map.prototype.getContextProvider = function() {
+  switch (this.drawer.type) {
+    case anychart.enums.SeriesDrawerTypes.CONNECTOR:
+      return new anychart.core.utils.MapConnectorPointContextProvider(this, this.getYValueNames());
+    default:
+      return new anychart.core.utils.MapPointContextProvider(this, this.getYValueNames());
+  }
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.createLabelsContextProvider = function() {
+  var provider = this.getContextProvider();
+  provider.applyReferenceValues();
+  return provider;
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
+  if (!this.tooltipContext) {
+    /**
+     * Tooltip context cache.
+     * @type {anychart.core.utils.SeriesPointContextProvider}
+     * @protected
+     */
+    this.tooltipContext = this.getContextProvider();
+  }
+  this.tooltipContext.applyReferenceValues();
+  return this.tooltipContext;
+};
+
+
 /** @inheritDoc */
 anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
   return this.createFormatProvider();
@@ -858,10 +1042,197 @@ anychart.core.series.Map.prototype.transformXY = function(xCoord, yCoord) {
 /** @inheritDoc */
 anychart.core.series.Map.prototype.createFormatProvider = function(opt_force) {
   if (!this.pointProvider || opt_force)
-    this.pointProvider = new anychart.core.utils.MapPointContextProvider(this, this.getYValueNames());
+    this.pointProvider = this.getContextProvider();
   this.pointProvider.applyReferenceValues();
 
   return this.pointProvider;
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.drawSingleFactoryElement = function(factory, index, positionProvider, formatProvider, stateFactory, pointOverride, statePointOverride, opt_position) {
+  var element = formatProvider ? factory.getLabel(/** @type {number} */(index)) : factory.getMarker(/** @type {number} */(index));
+  if (element) {
+    if (formatProvider)
+      element.formatProvider(formatProvider);
+    element.positionProvider(positionProvider);
+  } else {
+    if (formatProvider)
+      element = factory.add(formatProvider, positionProvider, index);
+    else
+      element = factory.add(positionProvider, index);
+  }
+  element.resetSettings();
+  if (formatProvider) {
+    element.autoAnchor(/** @type {anychart.enums.Anchor} */(this.getIterator().meta('labelAnchor')));
+  } else {
+    var rotation = /** @type {number} */(element.getFinalSettings('rotation'));
+    if (!goog.isDef(rotation) || goog.isNull(rotation) || isNaN(rotation)) {
+      var autoRotation = {'rotation': /** @type {number} */(this.getIterator().meta('markerRotation'))};
+      element.setSettings(autoRotation, autoRotation);
+    }
+
+    var anchor = /** @type {anychart.enums.Anchor} */(element.getFinalSettings('anchor'));
+    if (!goog.isDef(anchor) || goog.isNull(anchor)) {
+      var autoAnchor = {'anchor': /** @type {anychart.enums.Anchor} */(this.getIterator().meta('markerAnchor'))};
+      element.setSettings(autoAnchor, autoAnchor);
+    }
+  }
+  if (formatProvider)
+    element.currentLabelsFactory(stateFactory || factory);
+  else
+    element.currentMarkersFactory(stateFactory || factory);
+  element.setSettings(/** @type {Object} */(pointOverride), /** @type {Object} */(statePointOverride));
+  element.draw();
+  return element;
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.createPositionProvider = function(position, opt_shift3D) {
+  var iterator = this.getIterator();
+  var shape = iterator.meta('shapes')['path'];
+  if (shape) {
+    var sumDist = /** @type {number} */(iterator.meta('sumDist'));
+    var connectorsDist = /** @type {number} */(iterator.meta('connectorsDist'));
+    var points = /** @type {Array.<number>} */(iterator.meta('points'));
+    var accumDist = 0;
+
+    var normalizedPosition;
+    if (goog.isString(position)) {
+      switch (position) {
+        case 'start':
+          normalizedPosition = 0;
+          break;
+        case 'middle':
+          normalizedPosition = .5;
+          break;
+        case 'end':
+          normalizedPosition = 1;
+          break;
+        default:
+          if (anychart.utils.isPercent(position)) {
+            normalizedPosition = parseFloat(position) / 100;
+          } else {
+            normalizedPosition = anychart.utils.toNumber(position);
+            if (isNaN(normalizedPosition)) normalizedPosition = .5;
+          }
+      }
+    } else {
+      normalizedPosition = anychart.utils.toNumber(position);
+      if (isNaN(normalizedPosition)) normalizedPosition = .5;
+    }
+
+    //start, end, middle
+    //position relative full shortest path passing through all points
+    var pixPosition = normalizedPosition * sumDist;
+    for (var i = 0, len = points.length; i < len; i += 8) {
+      //length of shortest connector path
+      var currPathDist = connectorsDist[i / 8];
+
+      if (pixPosition >= accumDist && pixPosition <= accumDist + currPathDist) {
+        //calculated pixel position relative current connector
+        var pixPosition_ = pixPosition - accumDist;
+
+        //ratio relative current connector
+        var t = pixPosition_ / currPathDist;
+
+        //Control points relative scheme
+        //https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/B%C3%A9zier_3_big.svg/360px-B%C3%A9zier_3_big.svg.png
+        var p0x = points[i];
+        var p0y = points[i + 1];
+        var p1x = points[i + 2];
+        var p1y = points[i + 3];
+        var p2x = points[i + 4];
+        var p2y = points[i + 5];
+        var p3x = points[i + 6];
+        var p3y = points[i + 7];
+
+        var q0x = p1x + (p0x - p1x) * (1 - t);
+        var q0y = p1y + (p0y - p1y) * (1 - t);
+
+        var q1x = p2x + (p1x - p2x) * (1 - t);
+        var q1y = p2y + (p1y - p2y) * (1 - t);
+
+        var q2x = p3x + (p2x - p3x) * (1 - t);
+        var q2y = p3y + (p2y - p3y) * (1 - t);
+
+        var r0x = q1x + (q0x - q1x) * (1 - t);
+        var r0y = q1y + (q0y - q1y) * (1 - t);
+
+        var r1x = q2x + (q1x - q2x) * (1 - t);
+        var r1y = q2y + (q1y - q2y) * (1 - t);
+
+        var bx = r1x + (r0x - r1x) * (1 - t);
+        var by = r1y + (r0y - r1y) * (1 - t);
+
+
+        var horizontal = Math.sqrt(Math.pow(r1x - r0x, 2));
+        var vertical = Math.sqrt(Math.pow(r1y - r0y, 2));
+        var anglePathNormal = anychart.math.round(goog.math.toDegrees(Math.atan(vertical / horizontal)), 7);
+
+        if (r1x < r0x && r1y < r0y) {
+          anglePathNormal = anglePathNormal - 180;
+        } else if (r1x < r0x && r1y > r0y) {
+          anglePathNormal = 180 - anglePathNormal;
+        } else if (r1x > r0x && r1y > r0y) {
+          //anglePathNormal = anglePathNormal;
+        } else if (r1x > r0x && r1y < r0y) {
+          anglePathNormal = -anglePathNormal;
+        }
+
+        iterator.meta('labelAnchor', this.getAnchorForLabel(goog.math.standardAngle(anglePathNormal + 90)));
+        iterator.meta('markerRotation', anglePathNormal);
+        iterator.meta('markerAnchor', normalizedPosition == 1 ? anychart.enums.Anchor.RIGHT_CENTER : !normalizedPosition ? anychart.enums.Anchor.LEFT_CENTER : anychart.enums.Anchor.CENTER);
+
+        //todo (blackart) shapes for debug, don't remove.
+        //if (!this['q0' + this.getIterator().getIndex()]) this['q0' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['q0' + this.getIterator().getIndex()].centerX(q0x).centerY(q0y).radius(3);
+        //
+        //if (!this['q1' + this.getIterator().getIndex()]) this['q1' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['q1' + this.getIterator().getIndex()].centerX(q1x).centerY(q1y).radius(3);
+        //
+        //if (!this['q2' + this.getIterator().getIndex()]) this['q2' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['q2' + this.getIterator().getIndex()].centerX(q2x).centerY(q2y).radius(3);
+        //
+        //if (!this['r0' + this.getIterator().getIndex()]) this['r0' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['r0' + this.getIterator().getIndex()].centerX(r0x).centerY(r0y).radius(3);
+        //
+        //if (!this['r1' + this.getIterator().getIndex()]) this['r1' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['r1' + this.getIterator().getIndex()].centerX(r1x).centerY(r1y).radius(3);
+        //
+        //if (!this['b' + this.getIterator().getIndex()]) this['b' + this.getIterator().getIndex()] = this.container().circle().zIndex(1000).stroke('red');
+        //this['b' + this.getIterator().getIndex()].centerX(bx).centerY(by).radius(3);
+        //
+        //if (!this['q0q1' + this.getIterator().getIndex()]) this['q0q1' + this.getIterator().getIndex()] = this.container().path().zIndex(1000).stroke('blue');
+        //this['q0q1' + this.getIterator().getIndex()].clear().moveTo(q0x, q0y).lineTo(q1x, q1y);
+        //
+        //if (!this['q1q2' + this.getIterator().getIndex()]) this['q1q2' + this.getIterator().getIndex()] = this.container().path().zIndex(1000).stroke('blue');
+        //this['q1q2' + this.getIterator().getIndex()].clear().moveTo(q1x, q1y).lineTo(q2x, q2y);
+        //
+        //if (!this['r0r1' + this.getIterator().getIndex()]) this['r0r1' + this.getIterator().getIndex()] = this.container().path().zIndex(1000).stroke('blue');
+        //this['r0r1' + this.getIterator().getIndex()].clear().moveTo(r0x, r0y).lineTo(r1x, r1y);
+      }
+      accumDist += currPathDist;
+    }
+
+    if (this.map.zoomingInProgress || this.map.moving) {
+      var prevTx = this.map.mapTx;
+      var tx = this.map.getMapLayer().getFullTransformation().clone();
+
+      if (prevTx) {
+        tx.concatenate(prevTx.createInverse());
+      }
+
+      var scale = tx.getScaleX();
+      var dx = tx.getTranslateX();
+      var dy = tx.getTranslateY();
+      return {'value': {'x': bx * scale + dx, 'y': by * scale + dy}};
+    } else {
+      return {'value': {'x': bx, 'y': by}};
+    }
+  }
+  return {'value': {'x': 0, 'y': 0}};
 };
 
 
@@ -890,6 +1261,29 @@ anychart.core.series.Map.prototype.getPositionByRegion = function() {
     positionProvider = {'value': {'x': 0, 'y': 0}};
   }
   return positionProvider;
+};
+
+
+/**
+ * Gets marker position.
+ * @param {anychart.PointState|number} pointState If it is a hovered oe selected marker drawing.
+ * @return {string|number} Position settings.
+ */
+anychart.core.series.Map.prototype.getMarkersPosition = function(pointState) {
+  var iterator = this.getIterator();
+
+  var selected = this.state.isStateContains(pointState, anychart.PointState.SELECT);
+  var hovered = !selected && this.state.isStateContains(pointState, anychart.PointState.HOVER);
+
+  var pointMarker = iterator.get('marker');
+  var hoverPointMarker = iterator.get('hoverMarker');
+  var selectPointMarker = iterator.get('selectMarker');
+
+  var markerPosition = pointMarker && goog.isDef(pointMarker['position']) ? pointMarker['position'] : this.markers().position();
+  var markerHoverPosition = hoverPointMarker && goog.isDef(hoverPointMarker['position']) ? hoverPointMarker['position'] : goog.isDef(this.hoverMarkers().position()) ? this.hoverMarkers().position() : markerPosition;
+  var markerSelectPosition = selectPointMarker && goog.isDef(selectPointMarker['position']) ? selectPointMarker['position'] : goog.isDef(this.selectMarkers().position()) ? this.hoverMarkers().position() : markerPosition;
+
+  return hovered ? markerHoverPosition : selected ? markerSelectPosition : markerPosition;
 };
 
 

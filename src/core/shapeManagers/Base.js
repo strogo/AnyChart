@@ -210,6 +210,7 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
   shape.fill(fill);
   shape.stroke(/** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state)));
+  shape.disableStrokeScaling(true);
   shape.zIndex(descriptor.zIndex + baseZIndex);
   if (this.addInterctivityInfo)
     this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
@@ -237,8 +238,10 @@ anychart.core.shapeManagers.Base.prototype.clearShapes = function() {
     for (var i = 0; i < shapes.length; i++) {
       var shape = shapes[i];
       shape.parent(null);
-      if (shape instanceof acgraph.vector.Path)
+      if (shape instanceof acgraph.vector.Path) {
         shape.clear();
+        shape.setTransformationMatrix(1, 0, 0, 1, 0, 0);
+      }
     }
     this.shapePoolPointers[type] = 0;
     shapes.length = 0;

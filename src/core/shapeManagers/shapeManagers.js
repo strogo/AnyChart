@@ -883,7 +883,7 @@ anychart.core.shapeManagers.pathScrollerSelectFillStrokeConfig = {
 anychart.core.shapeManagers.pathMapConnectorEventHandlerConfig = {
   name: 'eventHandler',
   shapeType: anychart.enums.ShapeType.PATH,
-  fillNames: null,
+  fillNames: true,
   strokeNames: null,
   isHatchFill: false,
   zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX

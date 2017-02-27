@@ -1639,26 +1639,33 @@ anychart.core.series.Base.prototype.tooltip = function(opt_value) {
  * @return {function(anychart.core.series.Base, number, boolean=):acgraph.vector.AnyColor}
  */
 anychart.core.series.Base.getColorResolver = function(colorNames, colorType) {
+  var result;
   if (!colorNames) return anychart.core.series.Base.getNullColor_;
-  var hash = colorType + '|' + colorNames.join('|');
-  var result = anychart.core.series.Base.colorResolversCache_[hash];
-  if (!result) {
-    /** @type {!Function} */
-    var normalizerFunc;
-    switch (colorType) {
-      case anychart.enums.ColorType.STROKE:
-        normalizerFunc = anychart.core.settings.strokeOrFunctionSimpleNormalizer;
-        break;
-      case anychart.enums.ColorType.HATCH_FILL:
-        normalizerFunc = anychart.core.settings.hatchFillOrFunctionSimpleNormalizer;
-        break;
-      default:
-      case anychart.enums.ColorType.FILL:
-        normalizerFunc = anychart.core.settings.fillOrFunctionSimpleNormalizer;
-        break;
+  if (goog.isArray(colorNames)) {
+    var hash = colorType + '|' + colorNames.join('|');
+    result = anychart.core.series.Base.colorResolversCache_[hash];
+    if (!result) {
+      /** @type {!Function} */
+      var normalizerFunc;
+      switch (colorType) {
+        case anychart.enums.ColorType.STROKE:
+          normalizerFunc = anychart.core.settings.strokeOrFunctionSimpleNormalizer;
+          break;
+        case anychart.enums.ColorType.HATCH_FILL:
+          normalizerFunc = anychart.core.settings.hatchFillOrFunctionSimpleNormalizer;
+          break;
+        default:
+        case anychart.enums.ColorType.FILL:
+          normalizerFunc = anychart.core.settings.fillOrFunctionSimpleNormalizer;
+          break;
+      }
+      anychart.core.series.Base.colorResolversCache_[hash] = result = goog.partial(anychart.core.series.Base.getColor_,
+          colorNames, normalizerFunc, colorType == anychart.enums.ColorType.HATCH_FILL);
     }
-    anychart.core.series.Base.colorResolversCache_[hash] = result = goog.partial(anychart.core.series.Base.getColor_,
-        colorNames, normalizerFunc, colorType == anychart.enums.ColorType.HATCH_FILL);
+  } else {
+    result = anychart.core.series.Base.colorResolversCache_['transparent'];
+    if (!result)
+      result = anychart.core.series.Base.colorResolversCache_['transparent'] = function() {return anychart.color.TRANSPARENT_HANDLER};
   }
   return result;
 };

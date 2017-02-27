@@ -422,7 +422,6 @@ anychart.core.map.series.BaseWithMarkers.prototype.configureMarker = function(po
     }
 
     var anchor = /** @type {anychart.enums.Anchor} */(marker.getFinalSettings('anchor'));
-
     if (!goog.isDef(anchor) || goog.isNull(anchor)) {
       var autoAnchor = {'anchor': /** @type {anychart.enums.Anchor} */(this.getIterator().meta('markerAnchor'))};
       marker.setSettings(autoAnchor, autoAnchor);

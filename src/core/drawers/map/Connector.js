@@ -38,6 +38,13 @@ anychart.core.drawers.map.Connector = function(series) {
       ['endSize'],
       anychart.core.settings.numberNormalizer,
       ['endSize']);
+
+  /**
+   * Width of path for handle events. Used for cases when base connector path very narrow.
+   * @type {number}
+   * @private
+   */
+  this.eventHandlerPathWidth_ = 20;
 };
 goog.inherits(anychart.core.drawers.map.Connector, anychart.core.drawers.Base);
 anychart.core.drawers.AvailableDrawers[anychart.enums.SeriesDrawerTypes.CONNECTOR] = anychart.core.drawers.map.Connector;
@@ -117,7 +124,6 @@ anychart.core.drawers.map.Connector.prototype.drawSubsequentPoint = function(poi
  */
 anychart.core.drawers.map.Connector.prototype.getReferenceCoords = function(iterator) {
   // if (!this.enabled()) return null;
-  debugger;
   var refValues = this.getYValueNames();
 
   var scale = /** @type {anychart.scales.Geo} */(this.series.getChart().scale());
@@ -363,7 +369,6 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
   for (i = 0, len = referenceValues.length; i < len; i += 2) {
     /** @type {!acgraph.vector.Path} */
     var path = /** @type {acgraph.vector.Path} */(shapes['path']);
-    // path.clear();
 
     current_x = referenceValues[i];
     current_y = referenceValues[i + 1];
@@ -372,7 +377,6 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
     var eventHandlerPath;
     if (needsEventHandlerPath) {
       eventHandlerPath =  /** @type {acgraph.vector.Path} */(shapes['eventHandler']);
-      eventHandlerPath.clear();
     }
 
     if (!isNaN(current_x) && !isNaN(current_y)) {
@@ -456,7 +460,7 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
             /** @type {number} */(curvatureBasePointAngle));
 
 
-        this.makeInteractive(path);
+        // this.makeInteractive(path);
         paths.push(path);
 
 
@@ -477,8 +481,6 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
               curvature,
               directionRltAngle,
               /** @type {number} */(curvatureBasePointAngle));
-          this.makeInteractive(/** @type {acgraph.vector.Path} */(eventHandlerPath));
-          eventHandlerPath.fill(anychart.color.TRANSPARENT_HANDLER).stroke(null);
         }
 
         points.push.apply(points, connectorParams);
@@ -491,29 +493,9 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
     }
   }
 
-  // var x = /** @type {number} */(point.meta('x'));
-  // var zero = /** @type {number} */(point.meta('zero'));
-  // var y = /** @type {number} */(point.meta('value'));
-  //
-  // var leftX = x - this.pointWidth / 2;
-  // var rightX = leftX + this.pointWidth;
-  //
-  // var thickness = acgraph.vector.getThickness(/** @type {acgraph.vector.Stroke} */(shapes['path'].stroke()));
-  // if (this.crispEdges) {
-  //   leftX = anychart.utils.applyPixelShift(leftX, thickness);
-  //   rightX = anychart.utils.applyPixelShift(rightX, thickness);
-  // }
-  // y = anychart.utils.applyPixelShift(y, thickness);
-  // zero = anychart.utils.applyPixelShift(zero, thickness);
-  //
-  // var path = /** @type {acgraph.vector.Path} */(shapes['path']);
-  // anychart.core.drawers.move(path, this.isVertical, leftX, y);
-  // anychart.core.drawers.line(path, this.isVertical, rightX, y, rightX, zero, leftX, zero);
-  // path.close();
-  //
-  // path = /** @type {acgraph.vector.Path} */(shapes['hatchFill']);
-  // anychart.core.drawers.move(path, this.isVertical, leftX, y);
-  // anychart.core.drawers.line(path, this.isVertical, rightX, y, rightX, zero, leftX, zero);
-  // path.close();
+  point
+      .meta('points', points)
+      .meta('sumDist', sumDist)
+      .meta('connectorsDist', connectorsDist);
 };
 

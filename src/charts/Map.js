@@ -882,7 +882,7 @@ anychart.charts.Map.prototype.controlsInteractivity_ = function() {
         this.mapTx = this.getMapLayer().getFullTransformation().clone();
         for (var i = this.seriesList.length; i--;) {
           var series = /** @type {anychart.core.series.Map} */(this.seriesList[i]);
-          series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL, anychart.Signal.NEEDS_REDRAW);
+          series.invalidate(anychart.ConsistencyState.SERIES_POINTS, anychart.Signal.NEEDS_REDRAW);
           series.updateOnZoomOrMove();
         }
       }
@@ -1442,19 +1442,19 @@ anychart.charts.Map.prototype.updateSeriesOnZoomOrMove = function() {
 
   for (i = this.seriesList.length; i--;) {
     var series = this.seriesList[i];
-    series.updateOnZoomOrMove();
+    series.enabled() && series.updateOnZoomOrMove();
   }
 
   for (i = this.callouts_.length; i--;) {
     var callout = this.callouts_[i];
-    callout.updateOnZoomOrMove();
+    callout.enabled() && callout.updateOnZoomOrMove();
   }
 
   if (this.axesSettings_) {
     var axes = this.axesSettings_.getItems();
     for (i = 0; i < axes.length; i++) {
       var axis = axes[i];
-      axis.updateOnZoomOrMove(tx);
+      axis.enabled() && axis.updateOnZoomOrMove(tx);
     }
   }
 
@@ -1462,7 +1462,7 @@ anychart.charts.Map.prototype.updateSeriesOnZoomOrMove = function() {
     var grids = this.gridSettings_.getItems();
     for (i = grids.length; i--;) {
       var grid = grids[i];
-      grid.updateOnZoomOrMove(tx);
+      grid.enabled() && grid.updateOnZoomOrMove(tx);
     }
   }
 };
