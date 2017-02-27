@@ -26,7 +26,7 @@ PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
 CONTRIB_PATH = os.path.join(PROJECT_PATH, 'libs')
 SRC_PATH = os.path.join(PROJECT_PATH, 'src')
 OUT_PATH = os.path.join(PROJECT_PATH, 'out')
-DIST_PATH = os.path.join(PROJECT_PATH, 'out')
+DIST_PATH = os.path.join(PROJECT_PATH, 'dist')
 MODULES_PATH = os.path.join(SRC_PATH, 'modules')
 THEMES_PATH = os.path.join(SRC_PATH, 'themes')
 
@@ -735,61 +735,60 @@ def __build_release():
     mods = ['anychart_bundle', 'anychart',
             'anymap', 'anystock', 'anygantt', 'data_adapter', 'anychart_ui', 'chart_editor']
 
-    args = []
-    for module in mods:
-        dev_options['modules'] = [module]
-        prod_options['modules'] = [module]
-        args.append(dict(dev_options))
-        args.append(dict(prod_options))
-    pool = multiprocessing.Pool(arguments['process'])
-    pool.map_async(__compile_project_from_map, args).get(99999)
-    pool.close()
-    pool.join()
+    #args = []
+    #for module in mods:
+    #    dev_options['modules'] = [module]
+    #    prod_options['modules'] = [module]
+    #    args.append(dict(dev_options))
+    #    args.append(dict(prod_options))
+    #pool = multiprocessing.Pool(arguments['process'])
+    #pool.map_async(__compile_project_from_map, args).get(99999)
+    #pool.close()
+    #pool.join()
 
     print "Compile Themes"
-    __build_themes()
+    #__build_themes()
 
     # install packages
     print "Build install packages"
     print "    Download demos from PG"
-    if os.path.exists(os.path.join(OUT_PATH, 'gallery_demos')):
-        shutil.rmtree(os.path.join(OUT_PATH, 'gallery_demos'))
-    __download_and_unzip_from_http('http://playground.anychart.stg/gallery/develop/download', OUT_PATH, 'gallery_demos')
+    #if os.path.exists(os.path.join(OUT_PATH, 'gallery_demos')):
+    #    shutil.rmtree(os.path.join(OUT_PATH, 'gallery_demos'))
+    #__download_and_unzip_from_http('http://playground.anychart.stg/gallery/develop/download', OUT_PATH, 'gallery_demos')
 
     print "    Build AnyGantt install packages"
-    __build_product_package(
-        os.path.join(OUT_PATH, 'AnyGantt' + '-' + short_version),
-        'anygantt',
-        lambda name: name.startswith('Gantt') or name.startswith('Pert')
-    )
+    #__build_product_package(
+    #    os.path.join(OUT_PATH, 'AnyGantt' + '-' + short_version),
+    #    'anygantt',
+    #    lambda name: name.startswith('Gantt') or name.startswith('Pert')
+    #)
 
     print "    Build AnyStock install packages"
-    __build_product_package(
-        os.path.join(OUT_PATH, 'AnyStock' + '-' + short_version),
-        'anystock',
-        lambda name: name.startswith('Stock')
-    )
+    #__build_product_package(
+    #    os.path.join(OUT_PATH, 'AnyStock' + '-' + short_version),
+    #    'anystock',
+    #    lambda name: name.startswith('Stock')
+    #)
 
     print "    Build AnyMap install packages"
-    __build_product_package(
-        os.path.join(OUT_PATH, 'AnyMap' + '-' + short_version),
-        'anymap',
-        lambda name: (name.startswith('Maps') or name.startswith('Seat')) and name != 'Maps_in_Dashboard'
-    )
+    #__build_product_package(
+    #    os.path.join(OUT_PATH, 'AnyMap' + '-' + short_version),
+    #    'anymap',
+    #    lambda name: (name.startswith('Maps') or name.startswith('Seat')) and name != 'Maps_in_Dashboard'
+    #)
 
     print "    Build AnyChart install packages"
-    __build_product_package(
-        os.path.join(OUT_PATH, 'AnyChart' + '-' + short_version),
-        'anychart',
-        lambda name: not name.startswith('Stock') and
-                     not name.startswith('Gantt') and
-                     not name.startswith('Pert') and
-                     not name.startswith('Resource') and
-                     not name.startswith('Maps') and
-                     not name.startswith('Seat') and
-                     not name.startswith('Graphics')
-
-    )
+    #__build_product_package(
+    #    os.path.join(OUT_PATH, 'AnyChart' + '-' + short_version),
+    #    'anychart',
+    #    lambda name: not name.startswith('Stock') and
+    #                 not name.startswith('Gantt') and
+    #                 not name.startswith('Pert') and
+    #                 not name.startswith('Resource') and
+    #                 not name.startswith('Maps') and
+    #                 not name.startswith('Seat') and
+    #                 not name.startswith('Graphics')
+    #)
 
     # rm gallery demos dir
     shutil.rmtree(os.path.join(OUT_PATH, 'gallery_demos'))
@@ -873,13 +872,13 @@ def __build_product_package(output_dir, binary_name, gallery_pass_func=None):
     # copy chart editor (anychart install package only)
     if binary_name == 'anychart':
             shutil.copyfile(os.path.join(OUT_PATH, 'chart-editor.min.js'),
-                            os.path.join(output_dir, 'js', ' chart-editor.min.js'))
-            shutil.copyfile(os.path.join(OUT_PATH, ' chart-editor.min.js.gz'),
-                            os.path.join(output_dir, 'js', ' chart-editor.min.js.gz'))
-            shutil.copyfile(os.path.join(OUT_PATH, ' chart-editor.dev.min.js'),
-                            os.path.join(output_dir, 'js', ' chart-editor.dev.min.js'))
-            shutil.copyfile(os.path.join(OUT_PATH, ' chart-editor.dev.min.js.gz'),
-                            os.path.join(output_dir, 'js', ' chart-editor.dev.min.js.gz'))
+                            os.path.join(output_dir, 'js', 'chart-editor.min.js'))
+            shutil.copyfile(os.path.join(OUT_PATH, 'chart-editor.min.js.gz'),
+                            os.path.join(output_dir, 'js', 'chart-editor.min.js.gz'))
+            shutil.copyfile(os.path.join(OUT_PATH, 'chart-editor.dev.min.js'),
+                            os.path.join(output_dir, 'js', 'chart-editor.dev.min.js'))
+            shutil.copyfile(os.path.join(OUT_PATH, 'chart-editor.dev.min.js.gz'),
+                            os.path.join(output_dir, 'js', 'chart-editor.dev.min.js.gz'))
 
     # copy themes
     for theme in __get_themes_list():
@@ -1042,8 +1041,8 @@ def __upload_release():
         upload_list.append({'source_file': '%s/%s%s' % (OUT_PATH, theme, '.min.js'), 'target': '/themes/%s/'})
 
     # schemas
-    upload_list.append({'source_file': '%s/xml-schema.xsd' % PROJECT_PATH, 'target': '/schemas/%s/'})
-    upload_list.append({'source_file': '%s/json-schema.json' % PROJECT_PATH, 'target': '/schemas/%s/'})
+    upload_list.append({'source_file': '%s/xml-schema.xsd' % DIST_PATH, 'target': '/schemas/%s/'})
+    upload_list.append({'source_file': '%s/json-schema.json' % DIST_PATH, 'target': '/schemas/%s/'})
 
     # binaries packages
     upload_list.append({'source_file': '%s/anychart.zip' % OUT_PATH, 'target': '/binaries-package/%s/'})
