@@ -270,6 +270,43 @@ anychart.charts.Map.prototype.seriesConfig = (function() {
     postProcessor: null,
     capabilities: capabilities
   };
+  res[anychart.enums.MapSeriesType.MARKER] = {
+    drawerType: anychart.enums.SeriesDrawerTypes.MAP_MARKER,
+    shapeManagerType: anychart.enums.ShapeManagerTypes.PER_POINT,
+    shapesConfig: [
+      anychart.core.shapeManagers.pathFillStrokeConfig,
+      anychart.core.shapeManagers.pathHatchConfig
+    ],
+    secondaryShapesConfig: null,
+    postProcessor: null,
+    capabilities: capabilities
+  };
+  res[anychart.enums.MapSeriesType.BUBBLE] = {
+    drawerType: anychart.enums.SeriesDrawerTypes.MAP_BUBBLE,
+    shapeManagerType: anychart.enums.ShapeManagerTypes.PER_POINT,
+    shapesConfig: [
+      anychart.core.shapeManagers.circleFillStrokeConfig,
+      anychart.core.shapeManagers.circleHatchConfig,
+      anychart.core.shapeManagers.circleNegativeFillStrokeConfig,
+      anychart.core.shapeManagers.circleNegativeHatchConfig
+    ],
+    secondaryShapesConfig: null,
+    postProcessor: null,
+    capabilities: capabilities,
+    anchoredPositionTop: 'value',
+    anchoredPositionBottom: 'value'
+  };
+  res[anychart.enums.MapSeriesType.CHOROPLETH] = {
+    drawerType: anychart.enums.SeriesDrawerTypes.CHOROPLETH,
+    shapeManagerType: anychart.enums.ShapeManagerTypes.PER_POINT,
+    shapesConfig: [
+      anychart.core.shapeManagers.foreignPathFillConfig,
+      anychart.core.shapeManagers.pathHatchConfig
+    ],
+    secondaryShapesConfig: null,
+    postProcessor: null,
+    capabilities: capabilities
+  };
   return res;
 })();
 anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.charts.Map, anychart.charts.Map.prototype.seriesConfig);
@@ -1384,7 +1421,7 @@ anychart.charts.Map.prototype.doAdditionActionsOnMouseOverAndMove = function(ind
     if (target == series) {
       var iterator = target.getIterator();
       iterator.select(index);
-      var value = iterator.get(target.referenceValueNames[1]);
+      var value = iterator.get(target.getYValueNames()[1]);
       colorRange.showMarker(/** @type {number} */(value));
     }
   }
@@ -1753,18 +1790,6 @@ anychart.charts.Map.prototype.onCrosshairSignal_ = function(event) {
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
 anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvSettings) {
-  // var ctl;
-  // type = ('' + type).toLowerCase();
-  // for (var i in anychart.core.map.series.Base.SeriesTypesMap) {
-  //   if (i.toLowerCase() == type) {
-  //     ctl = anychart.core.map.series.Base.SeriesTypesMap[i];
-  //     break;
-  //   }
-  // }
-  // var instance;
-  // if (ctl) {
-  // instance = new ctl(data, opt_csvSettings);
-
   var configAndType = this.getConfigByType(type);
   if (configAndType) {
     type = /** @type {string} */(configAndType[0]);
@@ -1772,7 +1797,7 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
     var series = this.createSeriesInstance(type, config);
 
     var lastSeries = this.seriesList[this.seriesList.length - 1];
-    var index = lastSeries ? /** @type {number} */ (lastSeries.index()) + 1 : 0;
+    var index = lastSeries ? /** @type {number} */ (lastSeries.autoIndex()) + 1 : 0;
     this.seriesList.push(series);
 
     var inc = index * anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER;
@@ -1784,7 +1809,6 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
     series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
 
     series.setAutoGeoIdField(this.geoIdField());
-    series.setMap(this);
     if (this.internalGeoData)
       series.setGeoData(this.internalGeoData);
     series.setAutoColor(this.palette().itemAt(index));
@@ -3599,7 +3623,6 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
       }
     }
 
-
     this.invalidateSeries_();
     this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
 
@@ -5007,7 +5030,7 @@ anychart.charts.Map.prototype.legendItemClick = function(item, event) {
       var iterator = series.getResetIterator();
 
       while (iterator.advance()) {
-        var pointValue = iterator.get(series.referenceValueNames[1]);
+        var pointValue = iterator.get(series.getYValueNames()[1]);
         if (range == scale.getRangeByValue(pointValue)) {
           points.push(iterator.getIndex());
         }
@@ -5053,7 +5076,7 @@ anychart.charts.Map.prototype.legendItemOver = function(item, event) {
 
       var points = [];
       while (iterator.advance()) {
-        var pointValue = iterator.get(series.referenceValueNames[1]);
+        var pointValue = iterator.get(series.getYValueNames()[1]);
         if (range == scale.getRangeByValue(pointValue)) {
           points.push(iterator.getIndex());
         }

@@ -30,7 +30,6 @@ anychart.core.series.Map = function(chart, plot, type, config, sortedMode) {
   anychart.core.series.Map.base(this, 'constructor', chart, plot, type, config, sortedMode);
 
   this.geoData = [];
-  this.needSelfLayer = true;
   this.seriesPoints = [];
 };
 goog.inherits(anychart.core.series.Map, anychart.core.series.Cartesian);
@@ -43,7 +42,8 @@ goog.inherits(anychart.core.series.Map, anychart.core.series.Cartesian);
  */
 anychart.core.series.Map.prototype.SUPPORTED_SIGNALS =
     anychart.core.series.Cartesian.prototype.SUPPORTED_SIGNALS |
-    anychart.Signal.NEED_UPDATE_OVERLAP;
+    anychart.Signal.NEED_UPDATE_OVERLAP |
+    anychart.Signal.NEED_UPDATE_COLOR_RANGE;
 
 
 /**
@@ -54,7 +54,8 @@ anychart.core.series.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.core.series.Cartesian.prototype.SUPPORTED_CONSISTENCY_STATES |
     anychart.ConsistencyState.SERIES_HATCH_FILL |
     anychart.ConsistencyState.APPEARANCE |
-    anychart.ConsistencyState.MAP_GEO_DATA_INDEX;
+    anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
+    anychart.ConsistencyState.MAP_COLOR_SCALE;
 
 /**
  * Series element z-index in series root layer.
@@ -92,51 +93,8 @@ anychart.core.series.Map.SeriesTypesMap = {};
  * @return {boolean}
  */
 anychart.core.series.Map.prototype.needsUpdateMapAppearance = function() {
-  return false;
+  return this.isChoropleth();
 };
-
-
-/**
- * Returns middle point position. Needed here for compatibility with the Choropleth.
- * @return {Object}
- */
-anychart.core.series.Map.prototype.getMiddlePoint = function() {
-  return {'value': {'x': 0, 'y': 0}};
-};
-
-
-/**
- * @type {boolean}
- * @protected
- */
-anychart.core.series.Map.prototype.needSelfLayer;
-
-
-/**
- * @type {anychart.charts.Map}
- */
-anychart.core.series.Map.prototype.map;
-
-
-/**
- * Field names certain type of series needs from data set.
- * For example ['x', 'value']. Must be created in constructor. getReferenceCoords() doesn't work without this.
- * @type {!Array.<string>}
- */
-anychart.core.series.Map.prototype.referenceValueNames;
-
-
-/**
- * Attributes names list from referenceValueNames. Must be the same length as referenceValueNames.
- * For example ['x', 'y']. Must be created in constructor. getReferenceCoords() doesn't work without this.
- * Possible values:
- *    'x' - transforms through xScale,
- *    'y' - transforms through yScale,
- *    'z' - gets as zero Y.
- * NOTE: if we need zeroY, you need to ask for it prior toall 'y' values.
- * @type {!Array.<string>}
- */
-anychart.core.series.Map.prototype.referenceValueMeanings;
 
 
 /**
@@ -181,7 +139,36 @@ anychart.core.series.Map.prototype.seriesPoints;
  * method chaining.
  */
 anychart.core.series.Map.prototype.colorScale = function(opt_value) {
-  return null;
+  if (!this.isChoropleth())
+    return null;
+
+  if (goog.isDef(opt_value)) {
+    if (this.colorScale_ != opt_value) {
+      if (this.colorScale_)
+        this.colorScale_.unlistenSignals(this.colorScaleInvalidated_, this);
+      this.colorScale_ = opt_value;
+      if (this.colorScale_)
+        this.colorScale_.listenSignals(this.colorScaleInvalidated_, this);
+
+      this.invalidate(anychart.ConsistencyState.MAP_COLOR_SCALE,
+          anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_COLOR_RANGE);
+    }
+    return this;
+  }
+  return this.colorScale_;
+};
+
+
+/**
+ * Chart scale invalidation handler.
+ * @param {anychart.SignalEvent} event Event.
+ * @private
+ */
+anychart.core.series.Map.prototype.colorScaleInvalidated_ = function(event) {
+  if (event.hasSignal(anychart.Signal.NEEDS_RECALCULATION | anychart.Signal.NEEDS_REAPPLICATION)) {
+    this.invalidate(anychart.ConsistencyState.MAP_COLOR_SCALE,
+        anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_COLOR_RANGE);
+  }
 };
 
 
@@ -244,18 +231,6 @@ anychart.core.series.Map.prototype.setAutoGeoIdField = function(value) {
  */
 anychart.core.series.Map.prototype.getFinalGeoIdField = function() {
   return this.geoIdField_ || this.geoAutoGeoIdField_;
-};
-
-
-/**
- * Internal method. Sets link to parent chart.
- * @param {anychart.charts.Map} map .
- */
-anychart.core.series.Map.prototype.setMap = function(map) {
-  /**
-   * @type {anychart.charts.Map}
-   */
-  this.map = map;
 };
 
 
@@ -443,7 +418,7 @@ anychart.core.series.Map.prototype.overlapMode = function(opt_value) {
     return this;
   }
   return goog.isNull(this.overlapMode_) ?
-      /** @type {anychart.enums.LabelsOverlapMode} */(this.map.overlapMode()) :
+      /** @type {anychart.enums.LabelsOverlapMode} */(this.chart.overlapMode()) :
       this.overlapMode_ ?
           anychart.enums.LabelsOverlapMode.ALLOW_OVERLAP :
           anychart.enums.LabelsOverlapMode.NO_OVERLAP;
@@ -470,37 +445,15 @@ anychart.core.series.Map.prototype.labelsDrawingMap = function(opt_value) {
 
 //endregion
 //region --- Check functions
-/** @inheritDoc */
-anychart.core.series.Map.prototype.hasOwnLayer = function() {
-  return this.needSelfLayer;
-};
-
-
 /**
  * Tester if the series is size based (bubble).
  * @return {boolean}
  */
 anychart.core.series.Map.prototype.isChoropleth = function() {
-  return false;
+  return this.drawer.type == anychart.enums.SeriesDrawerTypes.CHOROPLETH;
 };
 
 
-/**
- * Whether draw hatch fill.
- * @return {boolean}
- */
-anychart.core.series.Map.prototype.needDrawHatchFill = function() {
-  return false;
-};
-
-
-//endregion
-//region --- Extracting data
-//----------------------------------------------------------------------------------------------------------------------
-//
-//  Extracting data
-//
-//----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
 anychart.core.series.Map.prototype.isPointVisible = function(point) {
   return true;
@@ -516,7 +469,19 @@ anychart.core.series.Map.prototype.isPointVisible = function(point) {
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
 anychart.core.series.Map.prototype.makePointMeta = function(rowInfo, yNames, yColumns) {
+  if (this.drawer.type == anychart.enums.SeriesDrawerTypes.MAP_MARKER || this.isSizeBased()) {
+    var point = this.createPositionProvider_(rowInfo);
 
+    if (point) {
+      rowInfo.meta('x', point['x']);
+      rowInfo.meta('value', point['y']);
+    }
+  }
+  if (this.isSizeBased()) {
+    // negative sizes should be filtered out on drawing plan calculation stage
+    // by settings missing reason VALUE_FIELD_MISSING
+    rowInfo.meta('size', this.calculateSize(Number(rowInfo.get('size'))));
+  }
 };
 
 
@@ -557,6 +522,15 @@ anychart.core.series.Map.prototype.calculateStatistics = function() {
 
 //endregion
 //region --- Interactivity
+/**
+ * Applies handlers to passed shape.
+ * @param {acgraph.vector.Element} shape
+ */
+anychart.core.series.Map.prototype.bindHandlersToShape = function(shape) {
+  this.bindHandlersToGraphics(shape);
+};
+
+
 /**
  * Update series elements on zoom or move map interactivity.
  * p.s. There is should be logic for series that does some manipulation with series elements. Now it is just series redrawing.
@@ -619,8 +593,8 @@ anychart.core.series.Map.prototype.applyZoomMoveTransformToLabel = function(labe
 
   var connectorElement = label.getConnectorElement();
   if (connectorElement && iterator.meta('positionMode') != anychart.enums.MapPointOutsidePositionMode.OFFSET) {
-    prevTx = this.map.mapTx;
-    tx = this.map.getMapLayer().getFullTransformation().clone();
+    prevTx = this.chart.mapTx;
+    tx = this.chart.getMapLayer().getFullTransformation().clone();
 
     if (prevTx) {
       tx.concatenate(prevTx.createInverse());
@@ -696,7 +670,7 @@ anychart.core.series.Map.prototype.applyZoomMoveTransformToMarker = function(mar
  * Applying zoom and move transformations to series elements for improve performans.
  */
 anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
-  var domElement, prevPos, newPos, trX, trY, selfTx;
+  var domElement, trX, trY, selfTx;
   var scale, dx, dy, prevTx, tx;
   var isDraw, labelsFactory, pointLabel, stateLabel, labelEnabledState, stateLabelEnabledState;
 
@@ -706,24 +680,62 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
   var pointState = this.state.getPointStateByIndex(index);
   var selected = this.state.isStateContains(pointState, anychart.PointState.SELECT);
   var hovered = !selected && this.state.isStateContains(pointState, anychart.PointState.HOVER);
+  var type = this.drawer.type;
 
   var paths = iterator.meta('shapes');
   if (paths) {
-    prevTx = this.chart.mapTx;
-    tx = this.chart.getMapLayer().getFullTransformation().clone();
+    if (this.isSizeBased() || type == anychart.enums.SeriesDrawerTypes.MAP_MARKER) {
+      var xPrev = /** @type {number} */(iterator.meta('x'));
+      var yPrev = /** @type {number} */(iterator.meta('value'));
 
-    if (prevTx) {
-      tx.concatenate(prevTx.createInverse());
+      var posProvider = this.createPositionProvider_(iterator);
+      var xNew = posProvider['x'];
+      var yNew = posProvider['y'];
+
+      domElement = paths['path'] || paths['circle'];
+      selfTx = domElement.getSelfTransformation();
+
+      trX = (selfTx ? -selfTx.getTranslateX() : 0) + xNew - xPrev;
+      trY = (selfTx ? -selfTx.getTranslateY() : 0) + yNew - yPrev;
+
+      goog.object.forEach(paths, function(path) {
+        path.translate(trX, trY);
+      });
+    } else if (type == anychart.enums.SeriesDrawerTypes.CONNECTOR) {
+      prevTx = this.chart.mapTx;
+      tx = this.chart.getMapLayer().getFullTransformation().clone();
+
+      if (prevTx) {
+        tx.concatenate(prevTx.createInverse());
+      }
+
+      scale = tx.getScaleX();
+      dx = tx.getTranslateX();
+      dy = tx.getTranslateY();
+
+      goog.object.forEach(paths, function(path) {
+        path.setTransformationMatrix(scale, 0, 0, scale, dx, dy);
+      });
+    } else if (type == anychart.enums.SeriesDrawerTypes.CHOROPLETH) {
+      tx = this.chart.getMapLayer().getFullTransformation();
+      var hatchFill = paths['hatchFill'];
+      if (hatchFill) {
+        hatchFill.setTransformationMatrix(tx.getScaleX(), tx.getShearX(), tx.getShearY(), tx.getScaleY(), tx.getTranslateX(), tx.getTranslateY());
+      }
     }
-
-    scale = tx.getScaleX();
-    dx = tx.getTranslateX();
-    dy = tx.getTranslateY();
-
-    goog.object.forEach(paths, function(path) {
-      path.setTransformationMatrix(scale, 0, 0, scale, dx, dy);
-    });
   }
+
+
+
+
+
+
+
+
+
+
+
+
 
   var pointMarker = iterator.get('marker');
   var hoverPointMarker = iterator.get('hoverMarker');
@@ -760,6 +772,11 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
       this.applyZoomMoveTransformToMarker(marker, pointState);
     }
   }
+
+
+
+
+
 
 
 
@@ -811,130 +828,67 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
  * Calculation before draw.
  */
 anychart.core.series.Map.prototype.calculate = function() {
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_GEO_DATA_INDEX)) {
-    var iterator = this.getResetIterator();
-    var index = this.map.getIndexedGeoData()[this.geoIdField()];
-    while (iterator.advance()) {
-      var name = iterator.get('id');
-      if (!name || !(goog.isString(name) || goog.isArray(name)))
-        continue;
-      name = goog.isArray(name) ? name : [name];
+  if (!this.isChoropleth()) {
+    this.markConsistent(anychart.ConsistencyState.MAP_COLOR_SCALE);
+  }
 
-      iterator.meta('features', undefined);
-      var features = [];
-      for (var j = 0, len_ = name.length; j < len_; j++) {
-        var id = name[j];
-        var point = index[id];
-        if (point) {
-          features.push(point);
+  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_GEO_DATA_INDEX) ||
+      this.hasInvalidationState(anychart.ConsistencyState.MAP_COLOR_SCALE)) {
+    var refNames = this.getYValueNames();
+    this.seriesPoints.length = 0;
+    var iterator = this.getResetIterator();
+    var index = this.chart.getIndexedGeoData();
+    var seriesIndex;
+    if (index)
+      seriesIndex = index[this.geoIdField()];
+
+    while (iterator.advance()) {
+      if (this.hasInvalidationState(anychart.ConsistencyState.MAP_GEO_DATA_INDEX)) {
+        if (!seriesIndex)
+          continue;
+
+        var name = iterator.get(refNames[0]);
+        if (!name || !(goog.isString(name) || goog.isArray(name)))
+          continue;
+
+        name = goog.isArray(name) ? name : [name];
+
+        iterator.meta('features', undefined);
+        var features = [];
+        for (var j = 0, len_ = name.length; j < len_; j++) {
+          var id = name[j];
+          var point = seriesIndex[id];
+          if (point) {
+            features.push(point);
+            this.seriesPoints[iterator.getIndex()] = id;
+          }
         }
+        iterator.meta('features', features);
       }
-      iterator.meta('features', features);
+
+      if (this.hasInvalidationState(anychart.ConsistencyState.MAP_COLOR_SCALE)) {
+        var value = iterator.get(refNames[1]);
+        if (this.colorScale_)
+          this.colorScale_.extendDataRange(value);
+      }
+    }
+
+    if (this.hasInvalidationState(anychart.ConsistencyState.MAP_COLOR_SCALE)) {
+      if (this.colorScale_)
+        this.colorScale_.finishAutoCalc();
     }
     this.markConsistent(anychart.ConsistencyState.MAP_GEO_DATA_INDEX);
+    this.markConsistent(anychart.ConsistencyState.MAP_COLOR_SCALE);
   }
 };
 
 
-/**
- * Draws series into the current container.
- * @return {anychart.core.series.Map} An instance of {@link anychart.core.series.Map} class for method chaining.
- */
-// anychart.core.series.Map.prototype.draw = function() {
-//   if (!this.checkDrawingNeeded())
-//     return this;
-//
-//   this.calculate();
-//
-//   this.suspendSignalsDispatching();
-//
-//   if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS))
-//     this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-//
-//   var iterator = this.getResetIterator();
-//
-//   this.startDrawing();
-//   while (iterator.advance() && this.enabled()) {
-//     var index = iterator.getIndex();
-//     if (iterator.get('selected') && this.hasInvalidationState(anychart.ConsistencyState.SERIES_DATA))
-//       this.state.setPointState(anychart.PointState.SELECT, index);
-//
-//     this.drawPoint(this.state.getPointStateByIndex(index));
-//   }
-//   this.finalizeDrawing();
-//
-//   this.resumeSignalsDispatching(false);
-//   this.markConsistent(anychart.ConsistencyState.ALL & ~anychart.ConsistencyState.CONTAINER);
-//
-//   return this;
-// };
+/** @inheritDoc */
+anychart.core.series.Map.prototype.finalizeDrawing = function() {
+  anychart.core.series.Map.base(this, 'finalizeDrawing');
 
-
-/**
- * Initializes sereis draw.<br/>
- * If scale is not explicitly set - creates a default one.
- */
-// anychart.core.series.Map.prototype.startDrawing = function() {
-//   if (!this.rootLayer) {
-//     if (this.needSelfLayer) {
-//       this.rootLayer = acgraph.layer();
-//       this.bindHandlersToGraphics(this.rootLayer);
-//     } else {
-//       this.rootLayer = /** @type {acgraph.vector.ILayer} */ (this.container());
-//     }
-//   }
-//
-//   this.checkDrawingNeeded();
-//
-//   this.labels().suspendSignalsDispatching();
-//   this.hoverLabels().suspendSignalsDispatching();
-//   this.selectLabels().suspendSignalsDispatching();
-//
-//   this.labels().clear();
-//
-//   this.labels().parentBounds(/** @type {anychart.math.Rect} */(this.container().getBounds()));
-//
-//   this.drawA11y();
-// };
-
-
-/**
- * Cconstructs children by this initializer.
- * @return {!acgraph.vector.Element} Returns new instance of an element.
- * @protected
- */
-anychart.core.series.Map.prototype.rootTypedLayerInitializer = goog.abstractMethod;
-
-
-/**
- * Draws a point iterator points to.
- * @param {anychart.PointState|number} pointState Point state.
- */
-// anychart.core.series.Map.prototype.drawPoint = function(pointState) {
-//   this.drawLabel(pointState);
-// };
-
-
-/**
- * Finishes series draw.
- * @example <t>listingOnly</t>
- * series.startDrawing();
- * while(series.getIterator().advance())
- *   series.drawPoint();
- * series.finalizeDrawing();
- */
-// anychart.core.series.Map.prototype.finalizeDrawing = function() {
-//   this.labels().container(/** @type {acgraph.vector.ILayer} */(this.rootLayer));
-//   this.labels().draw();
-//
-//   this.labels().resumeSignalsDispatching(false);
-//   this.hoverLabels().resumeSignalsDispatching(false);
-//   this.selectLabels().resumeSignalsDispatching(false);
-//
-//   this.labels().markConsistent(anychart.ConsistencyState.ALL);
-//   this.hoverLabels().markConsistent(anychart.ConsistencyState.ALL);
-//   this.selectLabels().markConsistent(anychart.ConsistencyState.ALL);
-// };
+  this.updateOnZoomOrMove();
+};
 
 
 //endregion
@@ -1034,7 +988,7 @@ anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
  * @return {Object.<string, number>} Object with pix values.
  */
 anychart.core.series.Map.prototype.transformXY = function(xCoord, yCoord) {
-  var values = this.getChart().scale().transform(xCoord, yCoord);
+  var values = this.chart.scale().transform(xCoord, yCoord);
   return {'x': values[0], 'y': values[1]};
 };
 
@@ -1089,8 +1043,54 @@ anychart.core.series.Map.prototype.drawSingleFactoryElement = function(factory, 
 
 
 /** @inheritDoc */
-anychart.core.series.Map.prototype.createPositionProvider = function(position, opt_shift3D) {
+anychart.core.series.Map.prototype.getMiddlePoint = function() {
+  var middleX, middleY, middlePoint, midX, midY, txCoords;
   var iterator = this.getIterator();
+  var features = iterator.meta('features');
+  var feature = features && features.length ? features[0] : null;
+
+  if (!feature || !this.isChoropleth())
+    return {'value': {'x': 0, 'y': 0}};
+
+  var pointGeoProp = /** @type {Object}*/(feature['properties']);
+
+  var middleXYModeGeoSettings = pointGeoProp && pointGeoProp['middleXYMode'];
+  var middleXYModeDataSettings = iterator.get('middleXYMode');
+
+  var middleXYMode = goog.isDef(middleXYModeDataSettings) ?
+      middleXYModeDataSettings : middleXYModeGeoSettings ?
+      middleXYModeGeoSettings : anychart.enums.MapPointMiddlePositionMode.RELATIVE;
+
+  if (middleXYMode == anychart.enums.MapPointMiddlePositionMode.RELATIVE) {
+    middlePoint = this.getPositionByRegion();
+  } else if (middleXYMode == anychart.enums.MapPointMiddlePositionMode.ABSOLUTE) {
+    midX = iterator.get('middle-x');
+    midY = iterator.get('middle-y');
+    middleX = /** @type {number}*/(goog.isDef(midX) ? midX : pointGeoProp ? pointGeoProp['middle-x'] : 0);
+    middleY = /** @type {number}*/(goog.isDef(midY) ? midY : pointGeoProp ? pointGeoProp['middle-y'] : 0);
+
+    middleX = anychart.utils.toNumber(middleX);
+    middleY = anychart.utils.toNumber(middleY);
+
+    txCoords = this.chart.scale().transform(middleX, middleY);
+
+    middlePoint = {'value': {'x': txCoords[0], 'y': txCoords[1]}};
+  } else {
+    middlePoint = {'value': {'x': 0, 'y': 0}};
+  }
+
+  return middlePoint;
+};
+
+
+/**
+ * Creates position provider for connector series.
+ * @param {anychart.data.IRowInfo} iterator .
+ * @param {string} position .
+ * @return {Object}
+ * @private
+ */
+anychart.core.series.Map.prototype.createConnectorPositionProvider_ = function(iterator, position) {
   var shape = iterator.meta('shapes')['path'];
   if (shape) {
     var sumDist = /** @type {number} */(iterator.meta('sumDist'));
@@ -1216,9 +1216,9 @@ anychart.core.series.Map.prototype.createPositionProvider = function(position, o
       accumDist += currPathDist;
     }
 
-    if (this.map.zoomingInProgress || this.map.moving) {
-      var prevTx = this.map.mapTx;
-      var tx = this.map.getMapLayer().getFullTransformation().clone();
+    if (this.chart.zoomingInProgress || this.chart.moving) {
+      var prevTx = this.chart.mapTx;
+      var tx = this.chart.getMapLayer().getFullTransformation().clone();
 
       if (prevTx) {
         tx.concatenate(prevTx.createInverse());
@@ -1227,12 +1227,189 @@ anychart.core.series.Map.prototype.createPositionProvider = function(position, o
       var scale = tx.getScaleX();
       var dx = tx.getTranslateX();
       var dy = tx.getTranslateY();
-      return {'value': {'x': bx * scale + dx, 'y': by * scale + dy}};
+      return {'x': bx * scale + dx, 'y': by * scale + dy};
     } else {
-      return {'value': {'x': bx, 'y': by}};
+      return {'x': bx, 'y': by};
     }
   }
-  return {'value': {'x': 0, 'y': 0}};
+};
+
+
+/**
+ * Creates position provider for series based on lat/lon position or position relative polygon bounds.
+ * @param {anychart.data.IRowInfo} iterator
+ * @return {Object}
+ * @private
+ */
+anychart.core.series.Map.prototype.createPositionProvider_ = function(iterator) {
+  var scale = this.chart.scale();
+  var fail = false;
+
+  var refValues = this.getYValueNames();
+
+  var id = iterator.get(refValues[0]);
+  var x = iterator.get(refValues[1]);
+  var y = iterator.get(refValues[2]);
+
+  var arrayMappingWithRegion = anychart.utils.isNaN(x) && x == id;
+
+  x = parseFloat(x);
+  y = parseFloat(y);
+
+  var txCoords = scale.transform(x, y);
+  if (!isNaN(x))
+    x = txCoords[0];
+  if (!isNaN(y) && !arrayMappingWithRegion)
+    y = txCoords[1];
+
+  if (isNaN(x) || isNaN(y)) {
+    var features = iterator.meta('features');
+    var prop = features && features.length ? features[0]['properties'] : null;
+    if (prop) {
+      iterator.meta('regionId', id);
+      var pos = this.getPositionByRegion()['value'];
+      if (isNaN(x))
+        x = pos['x'];
+      if (isNaN(y) || arrayMappingWithRegion)
+        y = pos['y'];
+    } else {
+      fail = true;
+    }
+  }
+
+  return fail ? null : {'x': x, 'y': y};
+};
+
+
+/**
+ * Creates position provider for choropleth series.
+ * @param {anychart.data.IRowInfo} iterator
+ * @return {Object}
+ * @private
+ */
+anychart.core.series.Map.prototype.createChoroplethPositionProvider_ = function(iterator) {
+  var features = iterator.meta('features');
+  var feature = features && features.length ? features[0] : null;
+  var middlePoint, midX, midY, txCoords;
+  if (feature) {
+    middlePoint = this.getMiddlePoint();
+
+    var dataLabel = iterator.get('label');
+    var dataLabelPositionMode, dataLabelXPos, dataLabelYPos;
+    if (dataLabel) {
+      dataLabelPositionMode = dataLabel['positionMode'];
+      dataLabelXPos = dataLabel['x'];
+      dataLabelYPos = dataLabel['y'];
+    }
+
+    var pointGeoProp = /** @type {Object}*/(feature['properties']);
+    var geoLabel = pointGeoProp && pointGeoProp['label'];
+    var geoLabelPositionMode, geoLabelXPos, geoLabelYPos;
+    if (geoLabel) {
+      geoLabelPositionMode = geoLabel && geoLabel['positionMode'];
+      geoLabelXPos = dataLabel['x'];
+      geoLabelYPos = dataLabel['y'];
+    }
+
+    var positionMode = dataLabelPositionMode || geoLabelPositionMode || anychart.enums.MapPointOutsidePositionMode.RELATIVE;
+    var x = goog.isDef(dataLabelXPos) ? dataLabelXPos : geoLabelXPos;
+    var y = goog.isDef(dataLabelYPos) ? dataLabelYPos : geoLabelYPos;
+
+    var labelPoint;
+    if (goog.isDef(x) && goog.isDef(y)) {
+      iterator.meta('positionMode', positionMode);
+
+      midX = middlePoint['value']['x'];
+      midY = middlePoint['value']['y'];
+
+      if (positionMode == anychart.enums.MapPointOutsidePositionMode.RELATIVE) {
+        x = anychart.utils.normalizeNumberOrPercent(x);
+        y = anychart.utils.normalizeNumberOrPercent(y);
+
+        x = anychart.utils.isPercent(x) ? parseFloat(x) / 100 : x;
+        y = anychart.utils.isPercent(y) ? parseFloat(y) / 100 : y;
+
+        var shape = feature.domElement;
+        if (shape) {
+          var bounds = shape.getAbsoluteBounds();
+          x = bounds.left + bounds.width * x;
+          y = bounds.top + bounds.height * y;
+        } else {
+          x = 0;
+          y = 0;
+        }
+      } else if (positionMode == anychart.enums.MapPointOutsidePositionMode.ABSOLUTE) {
+        txCoords = this.chart.scale().transform(parseFloat(x), parseFloat(y));
+        x = txCoords[0];
+        y = txCoords[1];
+      } else if (positionMode == anychart.enums.MapPointOutsidePositionMode.OFFSET) {
+        var angle = goog.math.toRadians(parseFloat(x) - 90);
+        var r = parseFloat(y);
+
+        x = midX + r * Math.cos(angle);
+        y = midY + r * Math.sin(angle);
+      }
+
+      var horizontal = Math.sqrt(Math.pow(midX - x, 2));
+      var vertical = Math.sqrt(Math.pow(midY - y, 2));
+      var connectorAngle = anychart.math.round(goog.math.toDegrees(Math.atan(vertical / horizontal)), 7);
+
+      if (midX < x && midY < y) {
+        connectorAngle = connectorAngle - 180;
+      } else if (midX < x && midY > y) {
+        connectorAngle = 180 - connectorAngle;
+      } else if (midX > x && midY > y) {
+        //connectorAngle = connectorAngle;
+      } else if (midX > x && midY < y) {
+        connectorAngle = -connectorAngle;
+      }
+
+      var anchor = this.getAnchorForLabel(goog.math.standardAngle(connectorAngle - 90));
+      iterator.meta('labelAnchor', anchor);
+      iterator.meta('markerAnchor', anchor);
+
+      labelPoint = {'x': x, 'y': y};
+    } else {
+      iterator.meta('labelAnchor', anychart.enums.Anchor.CENTER);
+      iterator.meta('markerAnchor', anychart.enums.Anchor.CENTER);
+    }
+  } else {
+    middlePoint = {'x': 0, 'y': 0};
+  }
+
+  if (labelPoint) {
+    labelPoint['connectorPoint'] = middlePoint;
+    return labelPoint;
+  } else {
+    return middlePoint;
+  }
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.createPositionProvider = function(position, opt_shift3D) {
+  var iterator = this.getIterator();
+  var point = {'x': 0, 'y': 0};
+
+  switch (this.drawer.type) {
+    case anychart.enums.SeriesDrawerTypes.CONNECTOR:
+      point = this.createConnectorPositionProvider_(iterator, position);
+      break;
+    case anychart.enums.SeriesDrawerTypes.MAP_MARKER:
+    case anychart.enums.SeriesDrawerTypes.MAP_BUBBLE:
+      point = this.createPositionProvider_(iterator);
+      break;
+    case anychart.enums.SeriesDrawerTypes.CHOROPLETH:
+      point = this.createChoroplethPositionProvider_(iterator);
+      break;
+  }
+
+  if (point) {
+    iterator.meta('x', point['x']);
+    iterator.meta('value', point['y']);
+  }
+
+  return {'value': point};
 };
 
 
@@ -1312,25 +1489,6 @@ anychart.core.series.Map.prototype.getReferenceScaleValues = function() {
 };
 
 
-/** @inheritDoc */
-anychart.core.series.Map.prototype.remove = function() {
-  if (this.rootLayer && this.needSelfLayer)
-    this.rootLayer.remove();
-
-  this.labels().container(null);
-  this.labels().draw();
-
-  anychart.core.series.Map.base(this, 'remove');
-};
-
-
-/** @inheritDoc */
-anychart.core.series.Map.prototype.getEnableChangeSignals = function() {
-  return anychart.core.series.Map.base(this, 'getEnableChangeSignals') | anychart.Signal.DATA_CHANGED |
-      anychart.Signal.NEEDS_RECALCULATION | anychart.Signal.NEED_UPDATE_LEGEND;
-};
-
-
 /**
  * Returns series point by id.
  * @param {string} value Point id.
@@ -1339,6 +1497,12 @@ anychart.core.series.Map.prototype.getEnableChangeSignals = function() {
 anychart.core.series.Map.prototype.getPointById = function(value) {
   var index = goog.array.indexOf(this.seriesPoints, value);
   return index != -1 ? this.getPoint(index) : null;
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.getPoint = function(index) {
+  return this.isChoropleth() ? new anychart.core.ChoroplethPoint(this, index) : anychart.core.series.Map.base(this, 'getPoint', index);
 };
 
 

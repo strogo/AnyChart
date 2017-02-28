@@ -3167,7 +3167,7 @@ goog.provide('anychart.themes.defaultTheme');
           for (var i = 0, len = seriesStatus.length; i < len; i++) {
             var status = seriesStatus[i];
             if (!status['points'].length) continue;
-            result += 'Series ' + status['series'].index() + ':\n';
+            result += 'Series ' + status['series'].getIndex() + ':\n';
             for (var j = 0, len_ = status['points'].length; j < len_; j++) {
               var point = status['points'][j];
               result += 'id: ' + point['id'] + ' index: ' + point['index'];

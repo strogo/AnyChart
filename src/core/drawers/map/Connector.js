@@ -97,7 +97,6 @@ anychart.core.drawers.map.Connector.prototype.requiredShapes = (function() {
 
 /** @inheritDoc */
 anychart.core.drawers.map.Connector.prototype.drawSubsequentPoint = function(point, state) {
-  var curvature = /** @type {number} */(this.curvatureGetter_(this.series, point, state));
   var startSize = /** @type {number} */(this.startSizeGetter_(this.series, point, state));
   var endSize = /** @type {number} */(this.endSizeGetter_(this.series, point, state));
 
@@ -107,7 +106,7 @@ anychart.core.drawers.map.Connector.prototype.drawSubsequentPoint = function(poi
   shapeNames['hatchFill'] = true;
 
   var shapes = /** @type {Object.<acgraph.vector.Path>} */(this.shapesManager.getShapesGroup(state, shapeNames));
-  this.drawPoint_(point, shapes);
+  this.drawPoint_(point, shapes, startSize, endSize);
 };
 
 
@@ -118,12 +117,12 @@ anychart.core.drawers.map.Connector.prototype.drawSubsequentPoint = function(poi
  * If there are several - array.
  * If any of the two is undefined - returns null.
  *
+ * @param {anychart.data.IRowInfo} iterator .
  * @return {?Array.<number>} Array with values or null, any of the two is undefined.
  *    (we do so to avoid reiterating to check on missing).
  * @protected
  */
 anychart.core.drawers.map.Connector.prototype.getReferenceCoords = function(iterator) {
-  // if (!this.enabled()) return null;
   var refValues = this.getYValueNames();
 
   var scale = /** @type {anychart.scales.Geo} */(this.series.getChart().scale());
@@ -344,14 +343,14 @@ anychart.core.drawers.map.Connector.prototype.drawConnector_ = function(path, st
 
 /**
  * Actually draws the point.
- * @param {anychart.data.IRowInfo} point
- * @param {Object.<acgraph.vector.Shape>} shapes
+ * @param {anychart.data.IRowInfo} point .
+ * @param {Object.<acgraph.vector.Shape>} shapes .
+ * @param {number} startSize .
+ * @param {number} endSize .
  * @private
  */
-anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shapes) {
+anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shapes, startSize, endSize) {
   var curvature = /** @type {number} */(this.curvatureGetter_(this.series, point));
-  var startSize = /** @type {number} */(this.startSizeGetter_(this.series, point));
-  var endSize = /** @type {number} */(this.endSizeGetter_(this.series, point));
 
   var i, len, current_x, current_y;
   var start_x = 0;

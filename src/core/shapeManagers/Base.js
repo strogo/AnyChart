@@ -66,6 +66,12 @@ anychart.core.shapeManagers.Base = function(series, config, interactive, opt_sha
   this.shapePools = {};
 
   /**
+   * Configured shapes.
+   * @type {Array.<acgraph.vector.Shape>}
+   */
+  this.configuredShapes = [];
+
+  /**
    * Shape pool pointers by shape type.
    * @type {!Object.<string, number>}
    */
@@ -86,6 +92,9 @@ anychart.core.shapeManagers.Base = function(series, config, interactive, opt_sha
     var val = String(type).toLowerCase();
     var cls;
     switch (val) {
+      case anychart.enums.ShapeType.NONE:
+        cls = null;
+        break;
       case anychart.enums.ShapeType.RECT:
         cls = acgraph.rect;
         break;
@@ -230,13 +239,57 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
 
 
 /**
+ *
+ * @param {string} name
+ * @param {number} state
+ * @param {number|boolean} indexOrGlobal
+ * @param {number} baseZIndex
+ * @param {acgraph.vector.Shape} shape
+ * @return {acgraph.vector.Shape}
+ * @protected
+ */
+anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state, indexOrGlobal, baseZIndex, shape) {
+  var descriptor = this.defs[name];
+
+  if (goog.array.indexOf(this.configuredShapes, shape) == -1) {
+    console.log(11);
+    this.series.bindHandlersToShape(shape);
+    this.configuredShapes.push(shape);
+  }
+
+  var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
+  shape.fill(fill);
+  shape.stroke(/** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state)));
+  shape.disableStrokeScaling(true);
+  shape.zIndex(descriptor.zIndex + baseZIndex);
+
+  if (this.addInterctivityInfo) {
+    this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
+  }
+
+  if (descriptor.isHatchFill) {
+    if (!(fill ||
+        (state != anychart.PointState.NORMAL && descriptor.fill(this.series, anychart.PointState.NORMAL)) ||
+        (state != anychart.PointState.HOVER && descriptor.fill(this.series, anychart.PointState.HOVER)) ||
+        (state != anychart.PointState.SELECT && descriptor.fill(this.series, anychart.PointState.SELECT)))) {
+      shape.parent(null);
+    } else {
+      shape.parent(this.layer);
+    }
+  }
+  return shape;
+};
+
+
+/**
  * Clears handled paths.
  */
 anychart.core.shapeManagers.Base.prototype.clearShapes = function() {
-  for (var type in this.usedShapes) {
-    var shapes = this.usedShapes[type];
-    for (var i = 0; i < shapes.length; i++) {
-      var shape = shapes[i];
+  var type, shapes, shape, i;
+  for (type in this.usedShapes) {
+    shapes = this.usedShapes[type];
+    for (i = 0; i < shapes.length; i++) {
+      shape = shapes[i];
       shape.parent(null);
       if (shape instanceof acgraph.vector.Path) {
         shape.clear();
@@ -254,9 +307,10 @@ anychart.core.shapeManagers.Base.prototype.clearShapes = function() {
  * @param {number} state - Shapes group state.
  * @param {Object.<string>=} opt_only If set - contains a subset of shape names that should be returned.
  * @param {number=} opt_baseZIndex - zIndex that is used as a base zIndex for all shapes of the group.
+ * @param {acgraph.vector.Shape=} opt_shape Foreign shape.
  * @return {Object.<string, acgraph.vector.Shape>}
  */
-anychart.core.shapeManagers.Base.prototype.getShapesGroup = function(state, opt_only, opt_baseZIndex) {
+anychart.core.shapeManagers.Base.prototype.getShapesGroup = function(state, opt_only, opt_baseZIndex, opt_shape) {
   var res = {};
   var names = opt_only || this.defs;
   var atPoint = this.series.isDiscreteBased();
@@ -269,7 +323,12 @@ anychart.core.shapeManagers.Base.prototype.getShapesGroup = function(state, opt_
     indexOrGlobal = true;
   }
   for (var name in names) {
-    res[name] = this.createShape(name, state, indexOrGlobal, opt_baseZIndex || 0);
+    var descriptor = names[name];
+    if (descriptor.shapeType == anychart.enums.ShapeType.NONE && opt_shape) {
+      res[name] = this.configureShape(name, state, indexOrGlobal, opt_baseZIndex || 0, opt_shape);
+    } else {
+      res[name] = this.createShape(name, state, indexOrGlobal, opt_baseZIndex || 0);
+    }
   }
   this.postProcessor(this.series, res, state);
   if (iterator)

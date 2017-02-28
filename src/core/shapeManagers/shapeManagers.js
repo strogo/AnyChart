@@ -888,3 +888,17 @@ anychart.core.shapeManagers.pathMapConnectorEventHandlerConfig = {
   isHatchFill: false,
   zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX
 };
+
+
+/**
+ * Template shape config for easy reusage.
+ * @const {anychart.core.shapeManagers.ShapeConfig}
+ */
+anychart.core.shapeManagers.foreignPathFillConfig = {
+  name: 'foreignFill',
+  shapeType: anychart.enums.ShapeType.NONE,
+  fillNames: ['fill', 'hoverFill', 'selectFill'],
+  strokeNames: null,
+  isHatchFill: false,
+  zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX
+};
