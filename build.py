@@ -752,7 +752,7 @@ def __build_release():
     # install packages
     print "Build install packages"
     print "    Download demos from PG"
-    #if os.path.exists(os.path.join(OUT_PATH, 'gallery_demos')):
+    if os.path.exists(os.path.join(OUT_PATH, 'gallery_demos')):
         shutil.rmtree(os.path.join(OUT_PATH, 'gallery_demos'))
     __download_and_unzip_from_http('http://playground.anychart.stg/gallery/develop/download', OUT_PATH, 'gallery_demos')
 
