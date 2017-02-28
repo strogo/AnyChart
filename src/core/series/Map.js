@@ -1405,11 +1405,6 @@ anychart.core.series.Map.prototype.createPositionProvider = function(position, o
       break;
   }
 
-  if (point) {
-    iterator.meta('x', point['x']);
-    iterator.meta('value', point['y']);
-  }
-
   return {'value': point};
 };
 

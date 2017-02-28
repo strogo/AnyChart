@@ -252,7 +252,6 @@ anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state
   var descriptor = this.defs[name];
 
   if (goog.array.indexOf(this.configuredShapes, shape) == -1) {
-    console.log(11);
     this.series.bindHandlersToShape(shape);
     this.configuredShapes.push(shape);
   }
