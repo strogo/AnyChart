@@ -9,7 +9,7 @@ goog.require('anychart.enums');
  * Choropleth drawer.
  * @param {anychart.core.series.Base} series
  * @constructor
- * @extends {anychart.core.drawers.Choropleth}
+ * @extends {anychart.core.drawers.Base}
  */
 anychart.core.drawers.map.Choropleth = function(series) {
   anychart.core.drawers.map.Choropleth.base(this, 'constructor', series);

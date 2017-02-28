@@ -1,5 +1,6 @@
 goog.provide('anychart.core.series.Map');
 goog.require('anychart.core.BubblePoint');
+goog.require('anychart.core.ChoroplethPoint');
 goog.require('anychart.core.SeriesPoint');
 goog.require('anychart.core.series.Cartesian');
 goog.require('anychart.core.utils.DrawingPlanIterator');

@@ -9,6 +9,8 @@ goog.require('anychart.animations.MapCrsAnimation');
 goog.require('anychart.animations.MapMoveAnimation');
 goog.require('anychart.animations.MapZoomAnimation');
 goog.require('anychart.core.ChartWithSeries');
+goog.require('anychart.core.IChart');
+goog.require('anychart.core.IPlot');
 goog.require('anychart.core.MapPoint');
 // goog.require('anychart.core.axes.Map');
 goog.require('anychart.core.axes.MapSettings');
@@ -16,7 +18,6 @@ goog.require('anychart.core.grids.MapSettings');
 goog.require('anychart.core.map.geom');
 goog.require('anychart.core.map.projections');
 goog.require('anychart.core.map.projections.TwinProjection');
-goog.require('anychart.core.map.series.Base');
 goog.require('anychart.core.reporting');
 goog.require('anychart.core.series.Map');
 goog.require('anychart.core.ui.Callout');
@@ -1817,8 +1818,8 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
 
     if (series.supportsMarkers()) {
       series.markers().setAutoZIndex(anychart.charts.Map.ZINDEX_MARKER + inc);
-      series.markers().setAutoFill((/** @type {anychart.core.map.series.BaseWithMarkers} */ (series)).getMarkerFill());
-      series.markers().setAutoStroke((/** @type {anychart.core.map.series.BaseWithMarkers} */ (series)).getMarkerStroke());
+      series.markers().setAutoFill((/** @type {anychart.core.series.Map} */ (series)).getMarkerFill());
+      series.markers().setAutoStroke((/** @type {anychart.core.series.Map} */ (series)).getMarkerStroke());
     }
 
     series.setup(this.defaultSeriesSettings()[type]);
@@ -1854,7 +1855,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
 
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
     state = anychart.ConsistencyState.SERIES_CHART_SERIES;
-    if ((/** @type {anychart.core.map.series.Base} */(event['target'])).needsUpdateMapAppearance())
+    if ((/** @type {anychart.core.series.Map} */(event['target'])).needsUpdateMapAppearance())
       state |= anychart.ConsistencyState.MAP_APPEARANCE;
   }
   if (event.hasSignal(anychart.Signal.NEED_UPDATE_OVERLAP)) {
@@ -1870,7 +1871,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
     state |= anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
         anychart.ConsistencyState.MAP_LABELS;
-    if ((/** @type {anychart.core.map.series.Base} */(event['target'])).needsUpdateMapAppearance())
+    if ((/** @type {anychart.core.series.Map} */(event['target'])).needsUpdateMapAppearance())
       state |= anychart.ConsistencyState.MAP_APPEARANCE;
     for (var i = this.seriesList.length; i--;)
       this.seriesList[i].invalidate(
@@ -2061,11 +2062,11 @@ anychart.charts.Map.prototype.geoScaleInvalidated_ = function(event) {
 
 
 /** @inheritDoc */
-anychart.charts.Map.prototype.xScale = goog.nullFunction;
+anychart.charts.Map.prototype.xScale = function() {return null};
 
 
 /** @inheritDoc */
-anychart.charts.Map.prototype.yScale = goog.nullFunction;
+anychart.charts.Map.prototype.yScale = function() {return null};
 
 
 /**
@@ -5068,7 +5069,7 @@ anychart.charts.Map.prototype.legendItemOver = function(item, event) {
     if (series)
       series.hoverSeries();
   } else if (sourceMode == anychart.enums.LegendItemsSourceMode.CATEGORIES) {
-    series = /** @type {anychart.core.map.series.Base} */(meta.series);
+    series = /** @type {anychart.core.series.Map} */(meta.series);
     var scale = meta.scale;
     if (scale && series) {
       var range = meta.range;
