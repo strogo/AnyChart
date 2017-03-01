@@ -493,6 +493,21 @@ anychart.core.series.Map.prototype.labelsDrawingMap = function(opt_value) {
 };
 
 
+/**
+ * Draws label for a point.
+ * @param {anychart.data.IRowInfo} point
+ * @param {anychart.PointState|number} pointState Point state - normal, hover or select.
+ * @protected
+ */
+anychart.core.series.Map.prototype.drawLabel = function(point, pointState) {
+  var index = point.getIndex();
+  if (this.check(anychart.core.series.Capabilities.SUPPORTS_LABELS) &&
+      !(this.labelsDrawingMap_ && goog.isDef(this.labelsDrawingMap_[index]) && !this.labelsDrawingMap_[index])) {
+    anychart.core.series.Map.base(this, 'drawLabel', point, pointState);
+  }
+};
+
+
 //endregion
 //region --- Check functions
 /**
