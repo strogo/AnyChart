@@ -140,9 +140,6 @@ anychart.core.series.Map.prototype.seriesPoints;
  * method chaining.
  */
 anychart.core.series.Map.prototype.colorScale = function(opt_value) {
-  // if (!this.isChoropleth())
-  //   return null;
-
   if (goog.isDef(opt_value)) {
     if (this.colorScale_ != opt_value) {
       if (this.colorScale_)
@@ -184,15 +181,15 @@ anychart.core.series.Map.prototype.getColorResolutionContext = function(opt_base
   var scaledColor;
   var iterator = this.getIterator();
   var ctx = {};
-
-  if (this.colorScale()) {
-    var value = /** @type {number} */(iterator(this.drawer.valueFieldName));
+  var colorScale = this.colorScale();
+  if (colorScale) {
+    var value = /** @type {number} */(iterator.get(this.drawer.valueFieldName));
     if (goog.isDef(value))
-      scaledColor = this.colorScale().valueToColor(value);
+      scaledColor = colorScale.valueToColor(value);
 
     goog.object.extend(ctx, {
       'scaledColor': scaledColor,
-      'colorScale': this.colorScale_
+      'colorScale': colorScale
     });
   }
 
@@ -1112,7 +1109,7 @@ anychart.core.series.Map.prototype.getMiddlePoint = function() {
   var feature = features && features.length ? features[0] : null;
 
   if (!feature || !this.isChoropleth())
-    return {'value': {'x': 0, 'y': 0}};
+    return {'x': 0, 'y': 0};
 
   var pointGeoProp = /** @type {Object}*/(feature['properties']);
 
@@ -1136,9 +1133,9 @@ anychart.core.series.Map.prototype.getMiddlePoint = function() {
 
     txCoords = this.chart.scale().transform(middleX, middleY);
 
-    middlePoint = {'value': {'x': txCoords[0], 'y': txCoords[1]}};
+    middlePoint = {'x': txCoords[0], 'y': txCoords[1]};
   } else {
-    middlePoint = {'value': {'x': 0, 'y': 0}};
+    middlePoint = {'x': 0, 'y': 0};
   }
 
   return middlePoint;
@@ -1329,7 +1326,7 @@ anychart.core.series.Map.prototype.createPositionProvider_ = function(iterator) 
     var prop = features && features.length ? features[0]['properties'] : null;
     if (prop) {
       iterator.meta('regionId', id);
-      var pos = this.getPositionByRegion()['value'];
+      var pos = this.getPositionByRegion();
       if (isNaN(x))
         x = pos['x'];
       if (isNaN(y) || arrayMappingWithRegion)
@@ -1490,9 +1487,9 @@ anychart.core.series.Map.prototype.getPositionByRegion = function() {
   var positionProvider;
   if (shape) {
     var bounds = shape.getAbsoluteBounds();
-    positionProvider = {'value': {'x': bounds.left + bounds.width * middleX, 'y': bounds.top + bounds.height * middleY}};
+    positionProvider = {'x': bounds.left + bounds.width * middleX, 'y': bounds.top + bounds.height * middleY};
   } else {
-    positionProvider = {'value': {'x': 0, 'y': 0}};
+    positionProvider = {'x': 0, 'y': 0};
   }
   return positionProvider;
 };
