@@ -23,7 +23,7 @@ anychart.connector = function(var_args) {
   map.setupByVal(anychart.getFullTheme('connector'), true);
 
   for (var i = 0, count = arguments.length; i < count; i++) {
-    map.connector(arguments[i]);
+    map['connector'](arguments[i]);
   }
 
   return map;

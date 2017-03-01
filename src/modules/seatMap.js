@@ -23,7 +23,7 @@ anychart.seatMap = function(var_args) {
   map.setupByVal(anychart.getFullTheme('seatMap'), true);
 
   for (var i = 0, count = arguments.length; i < count; i++) {
-    map.choropleth(arguments[i]);
+    map['choropleth'](arguments[i]);
   }
 
   return map;

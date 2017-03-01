@@ -24,7 +24,7 @@ anychart.bubbleMap = function(var_args) {
   map.setupByVal(anychart.getFullTheme('bubbleMap'), true);
 
   for (var i = 0, count = arguments.length; i < count; i++) {
-    map.bubble(arguments[i]);
+    map['bubble'](arguments[i]);
   }
 
   return map;

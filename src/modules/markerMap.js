@@ -23,7 +23,7 @@ anychart.markerMap = function(var_args) {
   map.setupByVal(anychart.getFullTheme('markerMap'), true);
 
   for (var i = 0, count = arguments.length; i < count; i++) {
-    map.marker(arguments[i]);
+    map['marker'](arguments[i]);
   }
 
   return map;

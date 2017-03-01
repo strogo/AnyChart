@@ -1796,7 +1796,7 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
   if (configAndType) {
     type = /** @type {string} */(configAndType[0]);
     var config = /** @type {anychart.core.series.TypeConfig} */(configAndType[1]);
-    var series = /** @type {anychart.core.series.Base} */(this.createSeriesInstance(type, config));
+    var series = /** @type {!anychart.core.series.Map} */(this.createSeriesInstance(type, config));
 
     var lastSeries = this.seriesList[this.seriesList.length - 1];
     var index = lastSeries ? /** @type {number} */ (lastSeries.autoIndex()) + 1 : 0;
@@ -1811,7 +1811,7 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
 
     // series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
 
-    series.setAutoGeoIdField(this.geoIdField());
+    series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
     if (this.internalGeoData)
       series.setGeoData(this.internalGeoData);
 

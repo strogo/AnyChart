@@ -13,6 +13,7 @@ goog.require('anychart.data');
 goog.require('anychart.enums');
 goog.require('anychart.utils');
 goog.require('goog.array');
+goog.require('goog.math.AffineTransform');
 
 
 
@@ -408,21 +409,6 @@ anychart.core.series.Map.prototype.getLabelBounds = function(index, opt_pointSta
 };
 
 
-/** @inheritDoc */
-anychart.core.series.Map.prototype.configureLabel = function(pointState, opt_reset) {
-  var label = /** @type {anychart.core.ui.LabelsFactory.Label} */(anychart.core.series.Map.base(this, 'configureLabel', pointState, opt_reset));
-  if (label) {
-    var anchor = /** @type {anychart.enums.Anchor} */(label.getMergedSettings()['anchor']);
-    if (!goog.isDef(anchor) || goog.isNull(anchor)) {
-      var autoAnchor = {'anchor': /** @type {anychart.enums.Anchor} */(this.getIterator().meta('labelAnchor'))};
-      label.setSettings(autoAnchor, autoAnchor);
-    }
-  }
-
-  return label;
-};
-
-
 /**
  * Anchor for angle of label
  * @param {number} angle Label angle.
@@ -478,7 +464,7 @@ anychart.core.series.Map.prototype.overlapMode = function(opt_value) {
 /**
  * Sets drawing labels map.
  * @param {Array.<boolean>=} opt_value .
- * @return {anychart.core.SeriesBase|Array.<boolean>}
+ * @return {anychart.core.series.Map|Array.<boolean>}
  */
 anychart.core.series.Map.prototype.labelsDrawingMap = function(opt_value) {
   if (goog.isDef(opt_value)) {
@@ -738,7 +724,7 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
   var hovered = !selected && this.state.isStateContains(pointState, anychart.PointState.HOVER);
   var type = this.drawer.type;
 
-  var paths = iterator.meta('shapes');
+  var paths = /** @type {Object.<string, acgraph.vector.Shape>} */(iterator.meta('shapes'));
   if (paths) {
     if (this.isSizeBased() || type == anychart.enums.SeriesDrawerTypes.MAP_MARKER) {
       var xPrev = /** @type {number} */(iterator.meta('x'));
@@ -797,7 +783,7 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
   var hoverPointMarker = iterator.get('hoverMarker');
   var selectPointMarker = iterator.get('selectMarker');
 
-  var marker = this.markers_.getMarker(index);
+  var marker = this.markers().getMarker(index);
 
   var markerEnabledState = pointMarker && goog.isDef(pointMarker['enabled']) ? pointMarker['enabled'] : null;
   var markerHoverEnabledState = hoverPointMarker && goog.isDef(hoverPointMarker['enabled']) ? hoverPointMarker['enabled'] : null;
@@ -806,21 +792,21 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
   isDraw = hovered || selected ?
       hovered ?
           goog.isNull(markerHoverEnabledState) ?
-              this.hoverMarkers_ && goog.isNull(this.hoverMarkers_.enabled()) ?
+              this.hoverMarkers() && goog.isNull(this.hoverMarkers().enabled()) ?
                   goog.isNull(markerEnabledState) ?
-                      this.markers_.enabled() :
+                      this.markers().enabled() :
                       markerEnabledState :
-                  this.hoverMarkers_.enabled() :
+                  this.hoverMarkers().enabled() :
               markerHoverEnabledState :
           goog.isNull(markerSelectEnabledState) ?
-              this.selectMarkers_ && goog.isNull(this.selectMarkers_.enabled()) ?
+              this.selectMarkers() && goog.isNull(this.selectMarkers().enabled()) ?
                   goog.isNull(markerEnabledState) ?
-                      this.markers_.enabled() :
+                      this.markers().enabled() :
                       markerEnabledState :
-                  this.selectMarkers_.enabled() :
+                  this.selectMarkers().enabled() :
               markerSelectEnabledState :
       goog.isNull(markerEnabledState) ?
-          this.markers_.enabled() :
+          this.markers().enabled() :
           markerEnabledState;
 
   if (isDraw) {
@@ -967,7 +953,7 @@ anychart.core.series.Map.prototype.finalizeDrawing = function() {
 
 //endregion
 //region --- Legend
-/** @inheritDoc */
+// /** @inheritDoc */
 // anychart.core.series.Map.prototype.getLegendItemData = function(itemsTextFormatter) {
 //   var legendItem = this.legendItem();
 //   legendItem.markAllConsistent();
@@ -1049,12 +1035,6 @@ anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
 };
 
 
-/** @inheritDoc */
-anychart.core.series.Map.prototype.createTooltipContextProvider = function() {
-  return this.createFormatProvider();
-};
-
-
 /**
  * Transform coords to pix values.
  * @param {number} xCoord X coordinate.
@@ -1067,7 +1047,11 @@ anychart.core.series.Map.prototype.transformXY = function(xCoord, yCoord) {
 };
 
 
-/** @inheritDoc */
+/**
+ * Creates format provider.
+ * @param {boolean} opt_force
+ * @return {!anychart.core.utils.SeriesPointContextProvider}
+ */
 anychart.core.series.Map.prototype.createFormatProvider = function(opt_force) {
   if (!this.pointProvider || opt_force)
     this.pointProvider = this.getContextProvider();
@@ -1116,7 +1100,10 @@ anychart.core.series.Map.prototype.drawSingleFactoryElement = function(factory, 
 };
 
 
-/** @inheritDoc */
+/**
+ * Returns middle point.
+ * @return {Object}
+ */
 anychart.core.series.Map.prototype.getMiddlePoint = function() {
   var middleX, middleY, middlePoint, midX, midY, txCoords;
   var iterator = this.getIterator();
@@ -1306,6 +1293,7 @@ anychart.core.series.Map.prototype.createConnectorPositionProvider_ = function(i
       return {'x': bx, 'y': by};
     }
   }
+  return {'x': 0, 'y': 0};
 };
 
 
@@ -1605,19 +1593,19 @@ anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
 //exports
 (function() {
   var proto = anychart.core.series.Map.prototype;
-  proto['color'] = proto.color;
-
-  proto['selectFill'] = proto.selectFill;
-  proto['hoverFill'] = proto.hoverFill;
-  proto['fill'] = proto.fill;
-
-  proto['selectStroke'] = proto.selectStroke;
-  proto['hoverStroke'] = proto.hoverStroke;
-  proto['stroke'] = proto.stroke;
-
-  proto['selectHatchFill'] = proto.selectHatchFill;
-  proto['hoverHatchFill'] = proto.hoverHatchFill;
-  proto['hatchFill'] = proto.hatchFill;
+  // proto['color'] = proto.color;
+  //
+  // proto['selectFill'] = proto.selectFill;
+  // proto['hoverFill'] = proto.hoverFill;
+  // proto['fill'] = proto.fill;
+  //
+  // proto['selectStroke'] = proto.selectStroke;
+  // proto['hoverStroke'] = proto.hoverStroke;
+  // proto['stroke'] = proto.stroke;
+  //
+  // proto['selectHatchFill'] = proto.selectHatchFill;
+  // proto['hoverHatchFill'] = proto.hoverHatchFill;
+  // proto['hatchFill'] = proto.hatchFill;
 
   proto['geoIdField'] = proto.geoIdField;
   proto['overlapMode'] = proto.overlapMode;

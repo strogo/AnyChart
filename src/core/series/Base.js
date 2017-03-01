@@ -1634,7 +1634,7 @@ anychart.core.series.Base.prototype.tooltip = function(opt_value) {
 //----------------------------------------------------------------------------------------------------------------------
 /**
  * Returns a color resolver for passed color names and type.
- * @param {?Array.<string>} colorNames
+ * @param {(Array.<string>|null|boolean)} colorNames
  * @param {anychart.enums.ColorType} colorType
  * @return {function(anychart.core.series.Base, number, boolean=):acgraph.vector.AnyColor}
  */

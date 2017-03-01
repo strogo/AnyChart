@@ -6,8 +6,8 @@ goog.provide('anychart.core.shapeManagers');
  * @typedef {{
  *   name: string,
  *   shapeType: string,
- *   fillNames: ?Array.<string>,
- *   strokeNames: ?Array.<string>,
+ *   fillNames: (Array.<string>|boolean|null),
+ *   strokeNames: (Array.<string>|boolean|null),
  *   isHatchFill: boolean,
  *   zIndex: number
  * }}

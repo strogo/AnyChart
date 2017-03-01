@@ -23,7 +23,7 @@ anychart.choropleth = function(var_args) {
   map.setupByVal(anychart.getFullTheme('choropleth'), true);
 
   for (var i = 0, count = arguments.length; i < count; i++) {
-    map.choropleth(arguments[i]);
+    map['choropleth'](arguments[i]);
   }
 
   return map;
