@@ -4156,7 +4156,7 @@ goog.provide('anychart.themes.defaultTheme');
     'ganttBase': {
       'splitterPosition': '30%',
       'headerHeight': 70,
-      'hoverFill': '#F8FAFB',
+      'rowHoverFill': '#F8FAFB',
       'rowSelectedFill': '#ebf1f4',
       'rowStroke': '#cecece',
       'editing': false,
@@ -4361,6 +4361,14 @@ goog.provide('anychart.themes.defaultTheme');
               'textFormatter': StockSimpleTooltipFormatter
             },
             'legendItem': {'iconStroke': 'none'}
+          },
+          'lineLike': {
+            'hoverMarkers': {
+              'enabled': null
+            },
+            'selectMarkers': {
+              'enabled': null
+            }
           },
           'rangeLike': {
             'tooltip': {
