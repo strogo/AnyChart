@@ -74,6 +74,65 @@ anychart.core.series.Map.ZINDEX_HATCH_FILL = 2;
 
 
 //endregion
+//region --- Properties
+/**
+ * Getter/setter for start connector points size.
+ * @param {(number|string)=} opt_value .
+ * @return {anychart.core.series.Map|number} .
+ */
+anychart.core.series.Map.prototype.startSize = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    opt_value = anychart.utils.toNumber(opt_value) || 0;
+    if (this.startSize_ != opt_value) {
+      this.startSize_ = opt_value;
+      this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
+    }
+    return this;
+  } else {
+    return this.startSize_;
+  }
+};
+
+
+/**
+ * Getter/setter for end connector points size.
+ * @param {(number|string)=} opt_value .
+ * @return {anychart.core.series.Map|number} .
+ */
+anychart.core.series.Map.prototype.endSize = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    opt_value = anychart.utils.toNumber(opt_value) || 0;
+    if (this.endSize_ != opt_value) {
+      this.endSize_ = opt_value;
+      this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
+    }
+    return this;
+  } else {
+    return this.endSize_;
+  }
+};
+
+
+/**
+ * Getter/setter for curvature of connector point.
+ * @param {(number|string)=} opt_value .
+ * @return {anychart.core.series.Map|number} .
+ */
+anychart.core.series.Map.prototype.curvature = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    opt_value = anychart.utils.toNumber(opt_value) || 0;
+    if (this.curvature_ != opt_value) {
+      this.curvature_ = opt_value;
+      this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL, anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP);
+    }
+    return this;
+  } else {
+    return this.curvature_;
+  }
+};
+
+
+//endregion
 //region --- Infrastructure
 /** @inheritDoc */
 anychart.core.series.Map.prototype.getCategoryWidth = function() {
@@ -1610,5 +1669,12 @@ anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
   proto['geoIdField'] = proto.geoIdField;
   proto['overlapMode'] = proto.overlapMode;
   proto['transformXY'] = proto.transformXY;
+
+  proto['colorScale'] = proto.colorScale;
+  proto['getPoint'] = proto.getPoint;
+
+  proto['endSize'] = proto.endSize;
+  proto['startSize'] = proto.startSize;
+  proto['curvature'] = proto.curvature;
 })();
 //endregion
