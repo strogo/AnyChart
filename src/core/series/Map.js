@@ -582,10 +582,8 @@ anychart.core.series.Map.prototype.makePointMeta = function(rowInfo, yNames, yCo
   if (this.drawer.type == anychart.enums.SeriesDrawerTypes.MAP_MARKER || this.isSizeBased()) {
     var point = this.createPositionProvider_(rowInfo);
 
-    if (point) {
-      rowInfo.meta('x', point['x']);
-      rowInfo.meta('value', point['y']);
-    }
+    rowInfo.meta('x', point ? point['x'] : NaN);
+    rowInfo.meta('value', point ? point['y'] : NaN);
   }
   if (this.isSizeBased()) {
     // negative sizes should be filtered out on drawing plan calculation stage
@@ -790,6 +788,9 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
       var yPrev = /** @type {number} */(iterator.meta('value'));
 
       var posProvider = this.createPositionProvider_(iterator);
+      if (!posProvider)
+        return;
+
       var xNew = posProvider['x'];
       var yNew = posProvider['y'];
 
@@ -981,6 +982,14 @@ anychart.core.series.Map.prototype.calculate = function() {
     this.markConsistent(anychart.ConsistencyState.MAP_GEO_DATA_INDEX);
     this.markConsistent(anychart.ConsistencyState.MAP_COLOR_SCALE);
   }
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.startDrawing = function() {
+  this.calculate();
+
+  anychart.core.series.Map.base(this, 'startDrawing');
 };
 
 
