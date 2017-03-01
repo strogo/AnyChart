@@ -82,8 +82,6 @@ anychart.core.drawers.map.Choropleth.prototype.drawSubsequentPoint = function(po
 
         var hatchFillElement = /** @type {!acgraph.vector.Path} */(shapes['hatchFill']);
         hatchFillElement.deserialize(element.serializePathArgs());
-        // var tx = this.series.getChart().getMapLayer().getFullTransformation();
-        // hatchFillElement.setTransformationMatrix(tx.getScaleX(), tx.getShearX(), tx.getShearY(), tx.getScaleY(), tx.getTranslateX(), tx.getTranslateY());
       }, this);
     }
   }

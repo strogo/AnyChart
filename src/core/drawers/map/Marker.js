@@ -22,9 +22,8 @@ anychart.core.drawers.AvailableDrawers[anychart.enums.SeriesDrawerTypes.MAP_MARK
 anychart.core.drawers.map.Marker.prototype.type = anychart.enums.SeriesDrawerTypes.MAP_MARKER;
 
 
-/**
- * Y values list that are required by this drawer.
- * @type {Array.<string>}
- */
+/** @inheritDoc */
 anychart.core.drawers.map.Marker.prototype.yValueNames = (['id', 'long', 'lat']);
+
+
 

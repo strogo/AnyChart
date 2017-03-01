@@ -66,12 +66,6 @@ anychart.core.shapeManagers.Base = function(series, config, interactive, opt_sha
   this.shapePools = {};
 
   /**
-   * Configured shapes.
-   * @type {Array.<acgraph.vector.Shape>}
-   */
-  this.configuredShapes = [];
-
-  /**
    * Shape pool pointers by shape type.
    * @type {!Object.<string, number>}
    */
@@ -250,11 +244,6 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
  */
 anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state, indexOrGlobal, baseZIndex, shape) {
   var descriptor = this.defs[name];
-
-  if (goog.array.indexOf(this.configuredShapes, shape) == -1) {
-    this.series.bindHandlersToShape(shape);
-    this.configuredShapes.push(shape);
-  }
 
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
   shape.fill(fill);

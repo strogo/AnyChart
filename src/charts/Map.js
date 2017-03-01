@@ -150,7 +150,8 @@ anychart.charts.Map = function() {
     this.zoomingInProgress = false;
     this.mapTx = this.getMapLayer().getFullTransformation().clone();
 
-    this.invalidateSeries_();
+    for (var i = this.seriesList.length; i--;)
+      this.seriesList[i].invalidate(anychart.ConsistencyState.SERIES_POINTS);
 
     this.applyLabelsOverlapState_ = true;
     this.applyLabelsOverlapState();
@@ -1795,34 +1796,37 @@ anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvS
   if (configAndType) {
     type = /** @type {string} */(configAndType[0]);
     var config = /** @type {anychart.core.series.TypeConfig} */(configAndType[1]);
-    var series = this.createSeriesInstance(type, config);
+    var series = /** @type {anychart.core.series.Base} */(this.createSeriesInstance(type, config));
 
     var lastSeries = this.seriesList[this.seriesList.length - 1];
     var index = lastSeries ? /** @type {number} */ (lastSeries.autoIndex()) + 1 : 0;
     this.seriesList.push(series);
 
     var inc = index * anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER;
-    // series.index(index).id(index);
-    series.autoIndex(index);
 
-    series.setAutoZIndex(anychart.charts.Map.ZINDEX_SERIES + inc);
+    series.id(index.toString());
+    series.autoIndex(index);
     series.data(data, opt_csvSettings);
-    series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
+    series.setAutoZIndex(anychart.charts.Map.ZINDEX_SERIES + inc);
+
+    // series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
 
     series.setAutoGeoIdField(this.geoIdField());
     if (this.internalGeoData)
       series.setGeoData(this.internalGeoData);
+
     series.setAutoColor(this.palette().itemAt(index));
     series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(index)));
     series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(index)));
 
-    if (series.supportsMarkers()) {
-      series.markers().setAutoZIndex(anychart.charts.Map.ZINDEX_MARKER + inc);
-      series.markers().setAutoFill((/** @type {anychart.core.series.Map} */ (series)).getMarkerFill());
-      series.markers().setAutoStroke((/** @type {anychart.core.series.Map} */ (series)).getMarkerStroke());
-    }
+    // if (series.supportsMarkers()) {
+    //   series.markers().setAutoZIndex(anychart.charts.Map.ZINDEX_MARKER + inc);
+    //   series.markers().setAutoFill((/** @type {anychart.core.series.Map} */ (series)).getMarkerFill());
+    //   series.markers().setAutoStroke((/** @type {anychart.core.series.Map} */ (series)).getMarkerStroke());
+    // }
 
-    series.setup(this.defaultSeriesSettings()[type]);
+    // series.setup(this.defaultSeriesSettings()[type]);
+
     series.listenSignals(this.seriesInvalidated, this);
     this.invalidate(
         anychart.ConsistencyState.SERIES_CHART_SERIES |
@@ -3146,7 +3150,7 @@ anychart.charts.Map.prototype.calculate = function() {
         series.statistics('sum', sum);
         series.statistics('average', average);
         series.statistics('pointsCount', pointsCount);
-        var seriesStrokeThickness = acgraph.vector.getThickness(/** @type {acgraph.vector.Stroke} */(series.stroke()));
+        var seriesStrokeThickness = acgraph.vector.getThickness(/** @type {acgraph.vector.Stroke} */(series.getOption('stroke')));
         if (seriesStrokeThickness > this.maxStrokeThickness_) {
           this.maxStrokeThickness_ = seriesStrokeThickness;
         }

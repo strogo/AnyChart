@@ -2654,6 +2654,7 @@ anychart.core.series.Base.prototype.onA11ySignal_ = function() {
 };
 
 
+
 /**
  * Draws the series.
  * @return {anychart.core.series.Base}
@@ -2691,7 +2692,6 @@ anychart.core.series.Base.prototype.draw = function() {
     this.invalidate(anychart.ConsistencyState.SERIES_CLIP |
         anychart.ConsistencyState.SERIES_POINTS |
         anychart.ConsistencyState.SERIES_COLOR);
-    this.markConsistent(anychart.ConsistencyState.BOUNDS);
   }
 
   // calculating pixel positions
@@ -2865,6 +2865,8 @@ anychart.core.series.Base.prototype.draw = function() {
     this.a11y().applyA11y(this.createTooltipContextProvider());
     this.markConsistent(anychart.ConsistencyState.A11Y);
   }
+
+  this.markConsistent(anychart.ConsistencyState.BOUNDS);
 
   this.resumeSignalsDispatching(false);
 

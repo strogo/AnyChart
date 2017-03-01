@@ -22,8 +22,9 @@ anychart.core.drawers.AvailableDrawers[anychart.enums.SeriesDrawerTypes.MAP_BUBB
 anychart.core.drawers.map.Bubble.prototype.type = anychart.enums.SeriesDrawerTypes.MAP_BUBBLE;
 
 
-/**
- * Y values list that are required by this drawer.
- * @type {Array.<string>}
- */
+/** @inheritDoc */
 anychart.core.drawers.map.Bubble.prototype.yValueNames = (['id', 'long', 'lat', 'size']);
+
+
+/** @inheritDoc */
+anychart.core.drawers.map.Bubble.prototype.valueFieldName = 'size';

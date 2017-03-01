@@ -140,8 +140,8 @@ anychart.core.series.Map.prototype.seriesPoints;
  * method chaining.
  */
 anychart.core.series.Map.prototype.colorScale = function(opt_value) {
-  if (!this.isChoropleth())
-    return null;
+  // if (!this.isChoropleth())
+  //   return null;
 
   if (goog.isDef(opt_value)) {
     if (this.colorScale_ != opt_value) {
@@ -173,23 +173,75 @@ anychart.core.series.Map.prototype.colorScaleInvalidated_ = function(event) {
 };
 
 
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Path manager interface methods
+//
+//----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
-anychart.core.series.Map.prototype.normalizeColor = function(color, var_args) {
-  var fill;
-  if (goog.isFunction(color)) {
-    var sourceColor = arguments.length > 1 ?
-        this.normalizeColor.apply(this, goog.array.slice(arguments, 1)) :
-        this.color();
-    var scope = {
-      'index': this.getIterator().getIndex(),
-      'sourceColor': sourceColor,
-      'iterator': this.getIterator(),
-      'referenceValueNames': this.referenceValueNames
+anychart.core.series.Map.prototype.getColorResolutionContext = function(opt_baseColor, opt_ignorePointSettings) {
+  var source = opt_baseColor || this.getOption('color') || 'blue';
+  var scaledColor;
+  var iterator = this.getIterator();
+  var ctx = {};
+
+  if (this.colorScale()) {
+    var value = /** @type {number} */(iterator(this.drawer.valueFieldName));
+    if (goog.isDef(value))
+      scaledColor = this.colorScale().valueToColor(value);
+
+    goog.object.extend(ctx, {
+      'scaledColor': scaledColor,
+      'colorScale': this.colorScale_
+    });
+  }
+
+  if (this.isChoropleth()) {
+    var feature = iterator.meta('currentPointElement');
+    var features = iterator.meta('features');
+    var point = features && features.length ? features[0] : null;
+    var properties = point ? point['properties'] : null;
+    var attributes = feature ? feature['attrs'] : null;
+    var domElement = feature ? feature['domElement'] : null;
+
+    goog.object.extend(ctx, {
+      'properties': properties,
+      'attributes': attributes,
+      'element': domElement
+    });
+  }
+
+  ctx['sourceColor'] = source;
+
+  if (this.supportsPointSettings()) {
+    iterator = !!opt_ignorePointSettings ? this.getDetachedIterator() : iterator;
+    goog.object.extend(ctx, {
+      'index': iterator.getIndex(),
+      'sourceColor': source,
+      'iterator': iterator,
+      'referenceValueNames': this.getYValueNames()
+    });
+  }
+
+  return ctx;
+};
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.getHatchFillResolutionContext = function(opt_ignorePointSettings) {
+  var source = this.getAutoHatchFill();
+  if (this.supportsPointSettings()) {
+    var iterator = !!opt_ignorePointSettings ? this.getDetachedIterator() : this.getIterator();
+    return {
+      'index': iterator.getIndex(),
+      'sourceHatchFill': source,
+      'iterator': iterator,
+      'referenceValueNames': this.getYValueNames()
     };
-    fill = color.call(scope);
-  } else
-    fill = color;
-  return fill;
+  }
+  return {
+    'sourceHatchFill': source
+  };
 };
 
 
@@ -523,15 +575,6 @@ anychart.core.series.Map.prototype.calculateStatistics = function() {
 
 //endregion
 //region --- Interactivity
-/**
- * Applies handlers to passed shape.
- * @param {acgraph.vector.Element} shape
- */
-anychart.core.series.Map.prototype.bindHandlersToShape = function(shape) {
-  this.bindHandlersToGraphics(shape);
-};
-
-
 /**
  * Update series elements on zoom or move map interactivity.
  * p.s. There is should be logic for series that does some manipulation with series elements. Now it is just series redrawing.
@@ -882,6 +925,24 @@ anychart.core.series.Map.prototype.calculate = function() {
     this.markConsistent(anychart.ConsistencyState.MAP_COLOR_SCALE);
   }
 };
+
+
+/** @inheritDoc */
+anychart.core.series.Map.prototype.drawPoint = function(point, state) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS) && this.isChoropleth()) {
+    var features = point.meta('features');
+
+    for (var i = 0, len = features.length; i < len; i++) {
+      var feature = features[i];
+      if (goog.isDef(feature.domElement)) {
+        this.bindHandlersToGraphics(feature.domElement);
+      }
+    }
+  }
+
+  anychart.core.series.Map.base(this, 'drawPoint', point, state);
+};
+
 
 
 /** @inheritDoc */

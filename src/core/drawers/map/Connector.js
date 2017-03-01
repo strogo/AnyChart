@@ -79,10 +79,7 @@ anychart.core.drawers.map.Connector.prototype.flags = (
     0);
 
 
-/**
- * Y values list that are required by this drawer.
- * @type {Array.<string>}
- */
+/** @inheritDoc */
 anychart.core.drawers.map.Connector.prototype.yValueNames = (['points']);
 
 
@@ -350,7 +347,7 @@ anychart.core.drawers.map.Connector.prototype.drawConnector_ = function(path, st
  * @private
  */
 anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shapes, startSize, endSize) {
-  var curvature = /** @type {number} */(this.curvatureGetter_(this.series, point));
+  var curvature = /** @type {number} */(this.curvatureGetter_(this.series, point, 0));
 
   var i, len, current_x, current_y;
   var start_x = 0;
@@ -367,7 +364,7 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
 
   for (i = 0, len = referenceValues.length; i < len; i += 2) {
     /** @type {!acgraph.vector.Path} */
-    var path = /** @type {acgraph.vector.Path} */(shapes['path']);
+    var path = /** @type {!acgraph.vector.Path} */(shapes['path']);
 
     current_x = referenceValues[i];
     current_y = referenceValues[i + 1];
