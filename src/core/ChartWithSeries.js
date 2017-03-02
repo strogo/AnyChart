@@ -255,8 +255,20 @@ anychart.core.ChartWithSeries.prototype.normalizeSeriesType = function(type) {
 
 /**
  * Getter/setter for defaultSeriesType.
- * @param {(string|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType)=} opt_value Default series type.
- * @return {anychart.core.ChartWithSeries|anychart.enums.CartesianSeriesType|anychart.enums.ScatterSeriesType} Default series type or self for chaining.
+ * @param {(
+ *    string |
+ *    anychart.enums.CartesianSeriesType |
+ *    anychart.enums.ScatterSeriesType |
+ *    anychart.enums.RadarSeriesType |
+ *    anychart.enums.PolarSeriesType
+ * )=} opt_value Default series type.
+ * @return {
+ *    anychart.core.ChartWithSeries |
+ *    anychart.enums.CartesianSeriesType |
+ *    anychart.enums.ScatterSeriesType |
+ *    anychart.enums.RadarSeriesType |
+ *    anychart.enums.PolarSeriesType
+ * } Default series type or self for chaining.
  */
 anychart.core.ChartWithSeries.prototype.defaultSeriesType = function(opt_value) {
   if (goog.isDef(opt_value)) {
@@ -486,7 +498,7 @@ anychart.core.ChartWithSeries.prototype.seriesInvalidated = function(event) {
     if (this.legend().itemsSourceMode() == anychart.enums.LegendItemsSourceMode.CATEGORIES) {
       state |= anychart.ConsistencyState.CHART_LEGEND;
     }
-    this.annotations().invalidateAnnotations();
+    this.invalidateAnnotations();
   }
   if (event.hasSignal(anychart.Signal.NEEDS_RECALCULATION)) {
     state |= anychart.ConsistencyState.SERIES_CHART_SCALES |
@@ -541,6 +553,12 @@ anychart.core.ChartWithSeries.prototype.invalidateSizeBasedSeries = function() {
 anychart.core.ChartWithSeries.prototype.isVertical = function() {
   return this.barChartMode;
 };
+
+
+/**
+ * A hook to invalidate annotations, if needed.
+ */
+anychart.core.ChartWithSeries.prototype.invalidateAnnotations = goog.nullFunction;
 
 
 //endregion
@@ -655,11 +673,13 @@ anychart.core.ChartWithSeries.prototype.checkXScaleType = function(scale) {
  * @param {*} scale
  * @return {boolean}
  */
-anychart.core.ChartWithSeries.prototype.checkYScaleType = anychart.core.ChartWithSeries.prototype.checkXScaleType;
+anychart.core.ChartWithSeries.prototype.checkYScaleType = function(scale) {
+  return this.checkXScaleType(scale);
+};
 
 
 /**
- * Creates scale by passed type.
+ * Creates X scale by passed type.
  * @param {string} value
  * @param {boolean} isXScale
  * @param {boolean} returnNullOnError
@@ -994,7 +1014,7 @@ anychart.core.ChartWithSeries.prototype.makeScaleMaps = function() {
     this.yScales = yScales;
     this.xScales = xScales;
     if (changed) {
-      this.annotations().invalidateAnnotations();
+      this.invalidateAnnotations();
       this.invalidate(
           anychart.ConsistencyState.CARTESIAN_ZOOM |
           anychart.ConsistencyState.AXES_CHART_ANNOTATIONS |
@@ -2272,6 +2292,33 @@ anychart.core.ChartWithSeries.prototype.beforeDraw = function() {
 
 
 /**
+ * Setups series before series drawing.
+ * @param {anychart.core.series.Base} series
+ * @param {number=} opt_topAxisPadding
+ * @param {number=} opt_rightAxisPadding
+ * @param {number=} opt_bottomAxisPadding
+ * @param {number=} opt_leftAxisPadding
+ */
+anychart.core.ChartWithSeries.prototype.setupSeriesBeforeDraw = function(series, opt_topAxisPadding, opt_rightAxisPadding, opt_bottomAxisPadding, opt_leftAxisPadding) {
+  series.axesLinesSpace(
+      opt_topAxisPadding || 0,
+      opt_rightAxisPadding || 0,
+      opt_bottomAxisPadding || 0,
+      opt_leftAxisPadding || 0);
+};
+
+
+/**
+ * A hook before series drawing cycle.
+ */
+anychart.core.ChartWithSeries.prototype.beforeSeriesDraw = function() {
+  this.prepare3d();
+  this.distributeSeries();
+  this.calcBubbleSizes();
+};
+
+
+/**
  * Draws series.
  * @param {number=} opt_topAxisPadding
  * @param {number=} opt_rightAxisPadding
@@ -2286,17 +2333,11 @@ anychart.core.ChartWithSeries.prototype.drawSeries = function(opt_topAxisPadding
     for (i = 0, count = this.seriesList.length; i < count; i++) {
       var series = this.seriesList[i];
       series.container(this.rootElement);
-      series.axesLinesSpace(
-          opt_topAxisPadding || 0,
-          opt_rightAxisPadding || 0,
-          opt_bottomAxisPadding || 0,
-          opt_leftAxisPadding || 0);
       series.parentBounds(this.dataBounds);
+      this.setupSeriesBeforeDraw(series);
     }
 
-    this.prepare3d();
-    this.distributeSeries();
-    this.calcBubbleSizes();
+    this.beforeSeriesDraw();
     for (i = 0; i < this.seriesList.length; i++) {
       this.seriesList[i].draw();
     }
@@ -2647,7 +2688,7 @@ anychart.core.ChartWithSeries.prototype.getSeriesStatus = function(event) {
             series.findInRangeByX(minValue, maxValue) :
             series.data().findInRangeByX(minValue, maxValue);
 
-        iterator = series.getResetIterator();
+        iterator = series.getDetachedIterator();
         var ind = [];
         var minLength = Infinity;
         var minLengthIndex;
@@ -2698,7 +2739,7 @@ anychart.core.ChartWithSeries.prototype.getSeriesStatus = function(event) {
         } else {
           index = series.data().findInUnsortedDataByX(anychart.utils.toNumber(value));
         }
-        iterator = series.getIterator();
+        iterator = series.getDetachedIterator();
         minLength = Infinity;
         if (index.length) {
           for (j = 0; j < index.length; j++) {
@@ -2774,6 +2815,52 @@ anychart.core.ChartWithSeries.prototype.setupByJSONWithScales = function(config,
         }
       }
     }
+  }
+};
+
+
+/**
+ * Setups elements defined by an array of json with scale instances map.
+ * @param {*} items
+ * @param {Function} itemConstructor
+ * @param {Object} scaleInstances
+ * @protected
+ */
+anychart.core.ChartWithSeries.prototype.setupElementsWithScales = function(items, itemConstructor, scaleInstances) {
+  if (goog.isArray(items)) {
+    for (var i = 0; i < items.length; i++) {
+      var json = items[i];
+      var element = itemConstructor.call(this, i);
+      element.setup(json);
+      if (goog.isObject(json) && 'scale' in json && json['scale'] > 1)
+        element.scale(scaleInstances[json['scale']]);
+    }
+  }
+};
+
+
+/**
+ * Serializes a list of items and writes it to json[propName] if the resulting list is not empty.
+ * @param {!Object} json
+ * @param {string} propName
+ * @param {Array.<T>} list
+ * @param {function(T, Array, Object, Array):Object} serializer
+ * @param {Array} scales
+ * @param {Object} scaleIds
+ * @param {Array} axesIds
+ * @protected
+ * @template T
+ */
+anychart.core.ChartWithSeries.prototype.serializeElementsWithScales = function(json, propName, list, serializer, scales, scaleIds, axesIds) {
+  var res = [];
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    if (item) {
+      res.push(serializer.call(this, item, scales, scaleIds, axesIds));
+    }
+  }
+  if (res.length) {
+    json[propName] = res;
   }
 };
 

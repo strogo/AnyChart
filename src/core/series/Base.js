@@ -977,6 +977,7 @@ anychart.core.series.Base.prototype.setAutoHatchFill = function(value) {
 anychart.core.series.Base.prototype.axesLinesSpace = function(opt_spaceOrTopOrTopAndBottom, opt_rightOrRightAndLeft, opt_bottom, opt_left) {
   if (!this.axesLinesSpace_) {
     this.axesLinesSpace_ = new anychart.core.utils.Padding();
+    this.axesLinesSpace_.set(0);
     this.registerDisposable(this.axesLinesSpace_);
   }
 
