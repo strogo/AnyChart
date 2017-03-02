@@ -606,7 +606,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXScales = function() 
             var drawingPlan = drawingPlans[i];
             var meta = drawingPlan.data[+index].meta;
             if (!anychart.core.series.filterPointAbsenceReason(meta['missing'],
-                    anychart.core.series.PointAbsenceReason.EXCLUDED_OR_ARTIFICIAL))
+                anychart.core.series.PointAbsenceReason.EXCLUDED_OR_ARTIFICIAL))
               return false;
           }
           return true;
@@ -873,7 +873,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateYScales = function() 
             for (j = firstIndex; j <= lastIndex; j++) {
               point = data[j];
               if (!anychart.core.series.filterPointAbsenceReason(point.meta['missing'],
-                      anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
+                  anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
                 for (k = 0; k < names.length; k++) {
                   yScale.extendDataRange(point.data[names[k]]);
                 }
@@ -884,7 +884,7 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateYScales = function() 
                 point = data[j];
                 var outliers = point.data['outliers'];
                 if (!anychart.core.series.filterPointAbsenceReason(point.meta['missing'],
-                        anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE) && goog.isArray(outliers)) {
+                    anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE) && goog.isArray(outliers)) {
                   for (k = 0; k < outliers.length; k++) {
                     yScale.extendDataRange(outliers[k]);
                   }
@@ -997,8 +997,8 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateXYScales = function()
       var names = series.getYValueNames();
       while (iterator.advance()) { // we need iterator to make error work :(
         if (!anychart.core.series.filterPointAbsenceReason(
-                iterator.meta('missing'),
-                anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
+            iterator.meta('missing'),
+            anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
           val = iterator.get('x');
           xScale.extendDataRange(val);
           if (hasError) {
@@ -1122,10 +1122,10 @@ anychart.core.ChartWithOrthogonalScales.prototype.calculateStatistics = function
           var pointVal = NaN;
 
           if (!anychart.core.series.filterPointAbsenceReason(pointObj.meta['missing'],
-                  anychart.core.series.PointAbsenceReason.ARTIFICIAL_POINT))
+              anychart.core.series.PointAbsenceReason.ARTIFICIAL_POINT))
             pointsCount++;
           if (!anychart.core.series.filterPointAbsenceReason(pointObj.meta['missing'],
-                  anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
+              anychart.core.series.PointAbsenceReason.ANY_BUT_RANGE)) {
             if (isRangeSeries) {
               pointVal = anychart.utils.toNumber(pointObj.data['open']);
               if (!isNaN(pointVal)) {

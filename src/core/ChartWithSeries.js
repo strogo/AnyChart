@@ -805,13 +805,22 @@ anychart.core.ChartWithSeries.prototype.beforeDraw = function() {
           anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE |
           anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE)) {
     anychart.core.Base.suspendSignalsDispatching(this.seriesList);
+
+    var state = 0;
+    if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE | anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE)) {
+      state |= anychart.ConsistencyState.SERIES_COLOR;
+    }
+    if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE)) {
+      state |= anychart.ConsistencyState.SERIES_MARKERS;
+    }
+
     for (var i = this.seriesList.length; i--;) {
       var series = this.seriesList[i];
       var index = /** @type {number} */(series.autoIndex());
       series.setAutoColor(this.palette().itemAt(index));
       series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(index)));
       series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(index)));
-      series.invalidate(anychart.ConsistencyState.SERIES_COLOR);
+      series.invalidate(state);
     }
     this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
     this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE |

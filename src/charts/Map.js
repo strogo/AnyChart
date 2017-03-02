@@ -2922,6 +2922,12 @@ anychart.charts.Map.prototype.getBoundsWithoutAxes = function(bounds) {
 };
 
 
+// /** @inheritDoc */
+// anychart.charts.Map.prototype.beforeDraw = function() {
+//
+// };
+
+
 /** @inheritDoc */
 anychart.charts.Map.prototype.calculate = function() {
   var i, series, tx, len, geom;
@@ -3632,62 +3638,6 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
 
     this.markConsistent(anychart.ConsistencyState.MAP_APPEARANCE);
-  }
-
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE) &&
-      this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {
-    for (i = this.seriesList.length; i--;) {
-      series = this.seriesList[i];
-
-      seriesType = series.getType();
-      this.applyLabelsOverlapState_[seriesType] = this.applyLabelsOverlapState_[seriesType] || !series.isConsistent();
-
-      series.suspendSignalsDispatching();
-      series.setParentEventTarget(this.getRootScene());
-      series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-      series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
-      var seriesIndex = /** @type {number} */ (series.index());
-      series.setAutoColor(this.palette().itemAt(seriesIndex));
-      series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(seriesIndex)));
-      series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(seriesIndex)));
-      series.draw();
-
-      series.resumeSignalsDispatching(false);
-    }
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE | anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE |
-        anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE | anychart.ConsistencyState.SERIES_CHART_SERIES);
-  }
-
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_PALETTE)) {
-    for (i = this.seriesList.length; i--;) {
-      series = this.seriesList[i];
-      series.setAutoColor(this.palette().itemAt(/** @type {number} */ (series.index())));
-      series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-    }
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_PALETTE);
-  }
-
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE)) {
-    for (i = this.seriesList.length; i--;) {
-      series = this.seriesList[i];
-      series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(/** @type {number} */ (series.index()))));
-      series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-    }
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_MARKER_PALETTE);
-  }
-
-  if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE)) {
-    for (i = this.seriesList.length; i--;) {
-      series = this.seriesList[i];
-      series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(/** @type {number} */ (series.index()))));
-      series.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL);
-    }
-    this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
-    this.markConsistent(anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {

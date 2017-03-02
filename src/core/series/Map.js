@@ -54,10 +54,9 @@ anychart.core.series.Map.prototype.SUPPORTED_SIGNALS =
  */
 anychart.core.series.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.core.series.Cartesian.prototype.SUPPORTED_CONSISTENCY_STATES |
-    anychart.ConsistencyState.SERIES_HATCH_FILL |
-    anychart.ConsistencyState.APPEARANCE |
     anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
     anychart.ConsistencyState.MAP_COLOR_SCALE;
+
 
 /**
  * Series element z-index in series root layer.
@@ -71,65 +70,6 @@ anychart.core.series.Map.ZINDEX_SERIES = 1;
  * @type {number}
  */
 anychart.core.series.Map.ZINDEX_HATCH_FILL = 2;
-
-
-//endregion
-//region --- Properties
-/**
- * Getter/setter for start connector points size.
- * @param {(number|string)=} opt_value .
- * @return {anychart.core.series.Map|number} .
- */
-anychart.core.series.Map.prototype.startSize = function(opt_value) {
-  if (goog.isDef(opt_value)) {
-    opt_value = anychart.utils.toNumber(opt_value) || 0;
-    if (this.startSize_ != opt_value) {
-      this.startSize_ = opt_value;
-      this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
-    }
-    return this;
-  } else {
-    return this.startSize_;
-  }
-};
-
-
-/**
- * Getter/setter for end connector points size.
- * @param {(number|string)=} opt_value .
- * @return {anychart.core.series.Map|number} .
- */
-anychart.core.series.Map.prototype.endSize = function(opt_value) {
-  if (goog.isDef(opt_value)) {
-    opt_value = anychart.utils.toNumber(opt_value) || 0;
-    if (this.endSize_ != opt_value) {
-      this.endSize_ = opt_value;
-      this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
-    }
-    return this;
-  } else {
-    return this.endSize_;
-  }
-};
-
-
-/**
- * Getter/setter for curvature of connector point.
- * @param {(number|string)=} opt_value .
- * @return {anychart.core.series.Map|number} .
- */
-anychart.core.series.Map.prototype.curvature = function(opt_value) {
-  if (goog.isDef(opt_value)) {
-    opt_value = anychart.utils.toNumber(opt_value) || 0;
-    if (this.curvature_ != opt_value) {
-      this.curvature_ = opt_value;
-      this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_HATCH_FILL, anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP);
-    }
-    return this;
-  } else {
-    return this.curvature_;
-  }
-};
 
 
 //endregion
@@ -236,13 +176,15 @@ anychart.core.series.Map.prototype.colorScaleInvalidated_ = function(event) {
 //
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
-anychart.core.series.Map.prototype.getColorResolutionContext = function(opt_baseColor, opt_ignorePointSettings) {
+anychart.core.series.Map.prototype.getColorResolutionContext = function(opt_baseColor, opt_ignorePointSettings, opt_ignoreColorScale) {
   var source = opt_baseColor || this.getOption('color') || 'blue';
   var scaledColor;
   var iterator = this.getIterator();
   var ctx = {};
   var colorScale = this.colorScale();
-  if (colorScale) {
+  var ignoreColorScale = goog.isDef(opt_ignoreColorScale) && opt_ignoreColorScale;
+
+  if (colorScale && !ignoreColorScale) {
     var value = /** @type {number} */(iterator.get(this.drawer.valueFieldName));
     if (goog.isDef(value))
       scaledColor = colorScale.valueToColor(value);
@@ -313,7 +255,7 @@ anychart.core.series.Map.prototype.geoIdField = function(opt_value) {
   if (goog.isDef(opt_value)) {
     if (opt_value != this.geoIdField_) {
       this.geoIdField_ = opt_value;
-      this.invalidate(anychart.ConsistencyState.APPEARANCE | anychart.ConsistencyState.SERIES_DATA,
+      this.invalidate(anychart.ConsistencyState.SERIES_POINTS | anychart.ConsistencyState.SERIES_DATA,
           anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEEDS_RECALCULATION);
     }
     return this;
@@ -1037,7 +979,6 @@ anychart.core.series.Map.prototype.drawPoint = function(point, state) {
 };
 
 
-
 /** @inheritDoc */
 anychart.core.series.Map.prototype.finalizeDrawing = function() {
   anychart.core.series.Map.base(this, 'finalizeDrawing');
@@ -1144,7 +1085,7 @@ anychart.core.series.Map.prototype.transformXY = function(xCoord, yCoord) {
 
 /**
  * Creates format provider.
- * @param {boolean} opt_force
+ * @param {boolean=} opt_force .
  * @return {!anychart.core.utils.SeriesPointContextProvider}
  */
 anychart.core.series.Map.prototype.createFormatProvider = function(opt_force) {
@@ -1667,11 +1608,6 @@ anychart.core.series.Map.prototype.serialize = function() {
   json['seriesType'] = this.getType();
   json['overlapMode'] = this.overlapMode_;
 
-  json['endSize'] = this.endSize();
-  json['startSize'] = this.startSize();
-  json['curvature'] = this.curvature();
-
-
   if (goog.isDef(this.geoIdField_))
     json['geoIdField'] = this.geoIdField_;
 
@@ -1685,10 +1621,6 @@ anychart.core.series.Map.prototype.serialize = function() {
  */
 anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
   anychart.core.series.Map.base(this, 'setupByJSON', config, opt_default);
-
-  this.endSize(config['endSize']);
-  this.startSize(config['startSize']);
-  this.curvature(config['curvature']);
 
   this.overlapMode(config['overlapMode']);
   this.geoIdField(config['geoIdField']);
@@ -1724,10 +1656,6 @@ anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
 
   proto['colorScale'] = proto.colorScale;
   proto['getPoint'] = proto.getPoint;
-
-  proto['endSize'] = proto.endSize;
-  proto['startSize'] = proto.startSize;
-  proto['curvature'] = proto.curvature;
 
   proto['allowPointsSelect'] = proto.allowPointsSelect;
 })();

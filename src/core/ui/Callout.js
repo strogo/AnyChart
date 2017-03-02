@@ -824,7 +824,7 @@ anychart.core.ui.Callout.prototype.createPositionProvider = function(index) {
 /**
  * Configure label with series labels settings.
  * @param {anychart.core.ui.LabelsFactory.Label} label Label for settings applying.
- * @param {anychart.core.map.series.Base} series Series of label.
+ * @param {anychart.core.series.Map} series Series of label.
  * @param {anychart.PointState|number} index Point index.
  * @param {number} pointState Point state.
  * @return {anychart.core.ui.LabelsFactory.Label}
@@ -873,7 +873,7 @@ anychart.core.ui.Callout.prototype.configureSeriesLabel = function(label, series
 anychart.core.ui.Callout.prototype.configureLabel = function(item, label, opt_pointState) {
   var pointIndex = item.getIndex();
 
-  var series = /** @type {anychart.core.map.series.Base} */(item.getSeries());
+  var series = /** @type {anychart.core.series.Map} */(item.getSeries());
   var iterator = series.getResetIterator();
   iterator.select(pointIndex);
 

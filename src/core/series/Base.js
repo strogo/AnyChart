@@ -1636,7 +1636,7 @@ anychart.core.series.Base.prototype.tooltip = function(opt_value) {
  * Returns a color resolver for passed color names and type.
  * @param {(Array.<string>|null|boolean)} colorNames
  * @param {anychart.enums.ColorType} colorType
- * @return {function(anychart.core.series.Base, number, boolean=):acgraph.vector.AnyColor}
+ * @return {function(anychart.core.series.Base, number, boolean=, boolean=):acgraph.vector.AnyColor}
  */
 anychart.core.series.Base.getColorResolver = function(colorNames, colorType) {
   var result;
@@ -1679,10 +1679,11 @@ anychart.core.series.Base.getColorResolver = function(colorNames, colorType) {
  * @param {anychart.core.series.Base} series
  * @param {number} state
  * @param {boolean=} opt_ignorePointSettings
+ * @param {boolean=} opt_ignoreColorScale
  * @return {acgraph.vector.Fill|acgraph.vector.Stroke|acgraph.vector.PatternFill}
  * @private
  */
-anychart.core.series.Base.getColor_ = function(colorNames, normalizer, isHatchFill, series, state, opt_ignorePointSettings) {
+anychart.core.series.Base.getColor_ = function(colorNames, normalizer, isHatchFill, series, state, opt_ignorePointSettings, opt_ignoreColorScale) {
   var stateColor, context;
   state = anychart.core.utils.InteractivityState.clarifyState(state);
   if (state != anychart.PointState.NORMAL && colorNames.length > 1) {
@@ -1709,11 +1710,14 @@ anychart.core.series.Base.getColor_ = function(colorNames, normalizer, isHatchFi
   if (goog.isFunction(color)) {
     context = isHatchFill ?
         series.getHatchFillResolutionContext(opt_ignorePointSettings) :
-        series.getColorResolutionContext(void 0, opt_ignorePointSettings);
+        series.getColorResolutionContext(void 0, opt_ignorePointSettings, opt_ignoreColorScale);
     color = /** @type {acgraph.vector.Fill|acgraph.vector.Stroke|acgraph.vector.PatternFill} */(normalizer(color.call(context, context)));
   }
   if (stateColor) { // it is a function and not a hatch fill here
-    context = series.getColorResolutionContext(/** @type {acgraph.vector.Fill|acgraph.vector.Stroke} */(color), opt_ignorePointSettings);
+    context = series.getColorResolutionContext(
+        /** @type {acgraph.vector.Fill|acgraph.vector.Stroke} */(color),
+        opt_ignorePointSettings,
+        opt_ignoreColorScale);
     color = normalizer(stateColor.call(context, context));
   }
   return /** @type {acgraph.vector.Fill|acgraph.vector.Stroke|acgraph.vector.PatternFill} */(color);
@@ -1735,6 +1739,7 @@ anychart.core.series.Base.getNullColor_ = function() {
  * This context is used to resolve a fill or stroke set as a function for current point.
  * @param {(acgraph.vector.Fill|acgraph.vector.Stroke)=} opt_baseColor
  * @param {boolean=} opt_ignorePointSettings Whether should take detached iterator.
+ * @param {boolean=} opt_ignoreColorScale Whether should use color scale.
  * @return {Object}
  */
 anychart.core.series.Base.prototype.getColorResolutionContext = goog.abstractMethod;
@@ -2364,7 +2369,7 @@ anychart.core.series.Base.prototype.getMarkerFill = function() {
   var fillGetter = anychart.core.series.Base.getColorResolver(
       [this.check(anychart.core.drawers.Capabilities.USES_STROKE_AS_FILL) ? 'stroke' : 'fill'],
       anychart.enums.ColorType.FILL);
-  var fill = /** @type {acgraph.vector.Fill} */(fillGetter(this, anychart.PointState.NORMAL, true));
+  var fill = /** @type {acgraph.vector.Fill} */(fillGetter(this, anychart.PointState.NORMAL, void 0, true));
   if (anychart.DEFAULT_THEME != 'v6')
     return /** @type {acgraph.vector.Fill} */(anychart.color.setOpacity(fill, 1, true));
   else
@@ -2652,7 +2657,6 @@ anychart.core.series.Base.prototype.a11y = function(opt_enabledOrJson) {
 anychart.core.series.Base.prototype.onA11ySignal_ = function() {
   this.invalidate(anychart.ConsistencyState.A11Y, anychart.Signal.NEEDS_REDRAW);
 };
-
 
 
 /**
@@ -3919,6 +3923,30 @@ anychart.core.series.Base.PROPERTY_DESCRIPTORS = (function() {
       anychart.Signal.NEEDS_RECALCULATION | anychart.Signal.NEEDS_REDRAW,
       anychart.core.drawers.Capabilities.ANY);
 
+  map['startSize'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'startSize',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW,
+      anychart.core.drawers.Capabilities.ANY);
+
+  map['endSize'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'endSize',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW,
+      anychart.core.drawers.Capabilities.ANY);
+
+  map['curvature'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'curvature',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS | anychart.Signal.NEED_UPDATE_OVERLAP,
+      anychart.Signal.NEEDS_REDRAW,
+      anychart.core.drawers.Capabilities.ANY);
+
   return map;
 })();
 
@@ -4182,6 +4210,9 @@ anychart.core.series.Base.prototype.disposeInternal = function() {
 //size
 //hoverSize
 //selectSize
+//endSize;
+//startSize;
+//curvature;
 
 //endregion
 

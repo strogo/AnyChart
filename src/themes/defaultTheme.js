@@ -2948,6 +2948,7 @@ goog.provide('anychart.themes.defaultTheme');
             'enabled': null
           },
           'markers': {
+            // 'fill': returnSourceColor,
             'enabled': false,
             'disablePointerEvents': false
           },
