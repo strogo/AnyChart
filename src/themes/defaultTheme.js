@@ -2991,7 +2991,9 @@ goog.provide('anychart.themes.defaultTheme');
           'startSize': 0,
           'endSize': 0,
           'curvature': .3,
-          'stroke': returnSourceColor,
+          'stroke': function() {
+            return {'thickness': 2, 'color': this['sourceColor']};
+          },
           'hoverStroke': returnLightenSourceColor,
           'selectStroke': '2 ' + defaultSelectColor,
           'markers': {
@@ -3041,6 +3043,9 @@ goog.provide('anychart.themes.defaultTheme');
           }
         },
         'bubble': {
+          'stroke': function() {
+            return {'thickness': 2, 'color': global['anychart']['color']['darken'](this['sourceColor'])};
+          },
           'labels': {
             'anchor': 'center'
           },

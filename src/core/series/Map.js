@@ -990,47 +990,51 @@ anychart.core.series.Map.prototype.finalizeDrawing = function() {
 //endregion
 //region --- Legend
 // /** @inheritDoc */
-// anychart.core.series.Map.prototype.getLegendItemData = function(itemsTextFormatter) {
-//   var legendItem = this.legendItem();
-//   legendItem.markAllConsistent();
-//   var json = legendItem.serialize();
-//   var iconFill, iconStroke, iconHatchFill;
-//   var ctx = {
-//     'sourceColor': this.color()
-//   };
-//   if (goog.isFunction(legendItem.iconFill())) {
-//     json['iconFill'] = legendItem.iconFill().call(ctx, ctx);
-//   }
-//   if (goog.isFunction(legendItem.iconStroke())) {
-//     json['iconStroke'] = legendItem.iconStroke().call(ctx, ctx);
-//   }
-//   if (goog.isFunction(legendItem.iconHatchFill())) {
-//     ctx['sourceColor'] = this.autoHatchFill;
-//     json['iconHatchFill'] = legendItem.iconHatchFill().call(ctx, ctx);
-//   }
-//   var itemText;
-//   if (goog.isFunction(itemsTextFormatter)) {
-//     var format = this.createLegendContextProvider();
-//     itemText = itemsTextFormatter.call(format, format);
-//   }
-//   if (!goog.isString(itemText))
-//     itemText = goog.isDef(this.name()) ? this.name() : 'Series: ' + this.index();
-//
-//   this.updateLegendItemMarker(json);
-//
-//   json['iconType'] = this.getLegendIconType(json['iconType']);
-//
-//   var ret = {
-//     'text': /** @type {string} */ (itemText),
-//     'iconEnabled': true,
-//     'iconStroke': void 0,
-//     'iconFill': /** @type {acgraph.vector.Fill} */ (this.color()),
-//     'iconHatchFill': void 0,
-//     'disabled': !this.enabled()
-//   };
-//   goog.object.extend(ret, json);
-//   return ret;
-// };
+anychart.core.series.Map.prototype.getLegendItemData = function(itemsTextFormatter) {
+  var legendItem = this.legendItem();
+  legendItem.markAllConsistent();
+  var json = legendItem.serialize();
+  var iconFill, iconStroke, iconHatchFill;
+  var ctx = {
+    'sourceColor': this.getOption('color')
+  };
+  if (goog.isFunction(legendItem.iconFill())) {
+    json['iconFill'] = legendItem.iconFill().call(ctx, ctx);
+  }
+  if (goog.isFunction(legendItem.iconStroke())) {
+    json['iconStroke'] = legendItem.iconStroke().call(ctx, ctx);
+  }
+  if (goog.isFunction(legendItem.iconHatchFill())) {
+    ctx['sourceColor'] = this.autoHatchFill;
+    json['iconHatchFill'] = legendItem.iconHatchFill().call(ctx, ctx);
+  }
+  var format = this.createLegendContextProvider();
+  var itemText;
+  if (goog.isFunction(itemsTextFormatter)) {
+
+    itemText = itemsTextFormatter.call(format, format);
+  }
+  if (!goog.isString(itemText))
+    itemText = goog.isDef(this.name()) ? this.name() : 'Series: ' + this.index();
+
+  if (json['iconType'] == anychart.enums.LegendItemIconType.MARKER && this.supportsMarkers()) {
+    json['iconFill'] = this.markers().fill();
+    json['iconStroke'] = this.markers().stroke();
+  }
+
+  json['iconType'] = this.getLegendIconType(json['iconType'], format);
+
+  var ret = {
+    'text': /** @type {string} */ (itemText),
+    'iconEnabled': true,
+    'iconStroke': void 0,
+    'iconFill': /** @type {acgraph.vector.Fill} */(this.getOption('color')),
+    'iconHatchFill': void 0,
+    'disabled': !this.enabled()
+  };
+  goog.object.extend(ret, json);
+  return ret;
+};
 
 
 //endregion
