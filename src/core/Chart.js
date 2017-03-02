@@ -2143,6 +2143,8 @@ anychart.core.Chart.prototype.onMouseDown = function(event) {
   var isMarkersFactory = event['target'] instanceof anychart.core.ui.MarkersFactory;
   var isTargetLegendOrColorRange = isLegend || isColorRange;
 
+  debugger;
+
   var series, s, index;
   if (isTargetLegendOrColorRange) {
     if (tag) {

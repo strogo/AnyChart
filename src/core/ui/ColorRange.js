@@ -195,9 +195,10 @@ anychart.core.ui.ColorRange.prototype.calculateRangeRegions_ = function() {
   var scale = this.scale();
   if (scale && scale instanceof anychart.scales.OrdinalColor) {
     this.rangeRegions_ = {};
-    var iterator = /** @type {anychart.core.series.Map|anychart.charts.TreeMap} */ (this.targetSeries_).getResetIterator();
+    var series = /** @type {anychart.core.series.Map|anychart.charts.TreeMap} */ (this.targetSeries_);
+    var iterator = /** @type {anychart.core.series.Map|anychart.charts.TreeMap} */ (series).getResetIterator();
     while (iterator.advance()) {
-      var pointValue = iterator.get(/** @type {anychart.core.series.Map|anychart.charts.TreeMap} */ (this.targetSeries_).drawer.valueFieldName);
+      var pointValue = iterator.get(series.drawer ? series.drawer.valueFieldName : series.referenceValueNames[1]);
       var range = scale.getRangeByValue(/** @type {number} */(pointValue));
       if (range) {
         if (!this.rangeRegions_[range.sourceIndex]) this.rangeRegions_[range.sourceIndex] = [];

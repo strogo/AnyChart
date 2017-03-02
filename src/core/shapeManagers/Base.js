@@ -211,10 +211,16 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
   this.shapePoolPointers[shapeType]++;
   this.usedShapes[shapeType].push(shape);
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
+  var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
   shape.fill(fill);
-  shape.stroke(/** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state)));
+  shape.stroke(stroke);
   shape.disableStrokeScaling(true);
   shape.zIndex(descriptor.zIndex + baseZIndex);
+
+  var iterator = this.series.getIterator();
+  iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
+  iterator.meta('stroke', stroke);
+
   if (this.addInterctivityInfo)
     this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
 
@@ -246,10 +252,15 @@ anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state
   var descriptor = this.defs[name];
 
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
+  var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
   shape.fill(fill);
-  shape.stroke(/** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state)));
+  shape.stroke(stroke);
   shape.disableStrokeScaling(true);
   shape.zIndex(descriptor.zIndex + baseZIndex);
+
+  var iterator = this.series.getIterator();
+  iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
+  iterator.meta('stroke', stroke);
 
   if (this.addInterctivityInfo) {
     this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
@@ -349,8 +360,12 @@ anychart.core.shapeManagers.Base.prototype.updateColors = function(state, opt_sh
     for (var name in opt_shapesGroup) {
       var descriptor = this.defs[name]; // if it is undefined - something went wrong
       var shape = opt_shapesGroup[name];
-      shape.fill(/** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state)));
-      shape.stroke(/** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state)));
+
+      var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
+      var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
+      shape.fill(fill);
+      shape.stroke(stroke);
+
       // we want to avoid adding invisible hatchFill shapes to the layer.
       if (descriptor.isHatchFill) {
         if (shape.fill() == 'none' && shape.stroke() == 'none') {
@@ -359,6 +374,10 @@ anychart.core.shapeManagers.Base.prototype.updateColors = function(state, opt_sh
           shape.visible(true);
         }
       }
+
+      var iterator = this.series.getIterator();
+      iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
+      iterator.meta('stroke', stroke);
     }
     this.postProcessor(this.series, opt_shapesGroup, state);
   }

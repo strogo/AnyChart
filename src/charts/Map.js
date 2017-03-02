@@ -4959,7 +4959,7 @@ anychart.charts.Map.prototype.createLegendItemsProvider = function(sourceMode, i
       scale = series.colorScale();
       itemData = series.getLegendItemData(itemsTextFormatter);
       itemData['sourceUid'] = goog.getUid(this);
-      itemData['sourceKey'] = series.index();
+      itemData['sourceKey'] = series.id();
       itemData['meta'] = {
         scale: scale
       };

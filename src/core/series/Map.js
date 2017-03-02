@@ -924,6 +924,31 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
 };
 
 
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  AllowPointsSelect. (Deprecated)
+//
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * Allows to select points of the series.
+ * @param {?boolean=} opt_value Allow or not.
+ * @return {null|boolean|anychart.core.series.Map} Returns allow points select state or current series instance for chaining.
+ * @deprecated Since 7.13.0 in Map series and was never introduced in public API of other series, but was exported. Use this.selectionMode() instead.
+ */
+anychart.core.series.Map.prototype.allowPointsSelect = function(opt_value) {
+  anychart.core.reporting.warning(anychart.enums.WarningCode.DEPRECATED, null, ['allowPointsSelect()', 'selectionMode()'], true);
+  if (goog.isDef(opt_value)) {
+    this.selectionMode(goog.isBoolean(opt_value) ?
+        (opt_value ?
+            anychart.enums.SelectionMode.MULTI_SELECT :
+            anychart.enums.SelectionMode.NONE) :
+        opt_value);
+    return this;
+  }
+  return goog.isNull(this.selectionMode()) ? null : this.selectionMode() != anychart.enums.SelectionMode.NONE;
+};
+
+
 //endregion
 //region --- Drawing
 /**
@@ -998,10 +1023,12 @@ anychart.core.series.Map.prototype.drawPoint = function(point, state) {
   if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS) && this.isChoropleth()) {
     var features = point.meta('features');
 
-    for (var i = 0, len = features.length; i < len; i++) {
-      var feature = features[i];
-      if (goog.isDef(feature.domElement)) {
-        this.bindHandlersToGraphics(feature.domElement);
+    if (features) {
+      for (var i = 0, len = features.length; i < len; i++) {
+        var feature = features[i];
+        if (goog.isDef(feature.domElement)) {
+          this.bindHandlersToGraphics(feature.domElement);
+        }
       }
     }
   }
@@ -1449,8 +1476,8 @@ anychart.core.series.Map.prototype.createChoroplethPositionProvider_ = function(
     if (goog.isDef(x) && goog.isDef(y)) {
       iterator.meta('positionMode', positionMode);
 
-      midX = middlePoint['value']['x'];
-      midY = middlePoint['value']['y'];
+      midX = middlePoint['x'];
+      midY = middlePoint['y'];
 
       if (positionMode == anychart.enums.MapPointOutsidePositionMode.RELATIVE) {
         x = anychart.utils.normalizeNumberOrPercent(x);
@@ -1640,6 +1667,11 @@ anychart.core.series.Map.prototype.serialize = function() {
   json['seriesType'] = this.getType();
   json['overlapMode'] = this.overlapMode_;
 
+  json['endSize'] = this.endSize();
+  json['startSize'] = this.startSize();
+  json['curvature'] = this.curvature();
+
+
   if (goog.isDef(this.geoIdField_))
     json['geoIdField'] = this.geoIdField_;
 
@@ -1647,18 +1679,29 @@ anychart.core.series.Map.prototype.serialize = function() {
 };
 
 
-/** @inheritDoc */
+/**
+ * @inheritDoc
+ * @suppress {deprecated}
+ */
 anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
   anychart.core.series.Map.base(this, 'setupByJSON', config, opt_default);
 
+  this.endSize(config['endSize']);
+  this.startSize(config['startSize']);
+  this.curvature(config['curvature']);
+
   this.overlapMode(config['overlapMode']);
   this.geoIdField(config['geoIdField']);
+  if (goog.isDef(config['allowPointsSelect'])) {
+    this.allowPointsSelect(config['allowPointsSelect']);
+  }
 };
 
 
 //endregion
 //region --- Exports
 //exports
+/** @suppress {deprecated} */
 (function() {
   var proto = anychart.core.series.Map.prototype;
   // proto['color'] = proto.color;
@@ -1685,5 +1728,7 @@ anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
   proto['endSize'] = proto.endSize;
   proto['startSize'] = proto.startSize;
   proto['curvature'] = proto.curvature;
+
+  proto['allowPointsSelect'] = proto.allowPointsSelect;
 })();
 //endregion

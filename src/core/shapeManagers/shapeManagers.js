@@ -898,7 +898,7 @@ anychart.core.shapeManagers.foreignPathFillConfig = {
   name: 'foreignFill',
   shapeType: anychart.enums.ShapeType.NONE,
   fillNames: ['fill', 'hoverFill', 'selectFill'],
-  strokeNames: null,
+  strokeNames: ['stroke', 'hoverStroke', 'selectStroke'],
   isHatchFill: false,
   zIndex: anychart.core.shapeManagers.FILL_SHAPES_ZINDEX
 };

@@ -417,7 +417,7 @@ anychart.core.ui.Callout.prototype.updateOnZoomOrMove = function() {
     iterator.select(item.getIndex());
 
     var positionProvider = this.createPositionProvider(label.getIndex())['value'];
-    var middlePoint = series.getMiddlePoint()['value'];
+    var middlePoint = series.getMiddlePoint();
 
     connector
         .clear()
@@ -902,7 +902,7 @@ anychart.core.ui.Callout.prototype.configureLabel = function(item, label, opt_po
   label.setSettings(parentSettings, goog.object.extend(label.superSettingsObj, currentSettings));
 
   var positionProvider = this.createPositionProvider(label.getIndex());
-  positionProvider['connectorPoint'] = series.getMiddlePoint();
+  positionProvider['connectorPoint'] = {'value': series.getMiddlePoint()};
   label.positionProvider(positionProvider);
 
   if (this.isHorizontal()) {
@@ -926,13 +926,17 @@ anychart.core.ui.Callout.prototype.configureLabel = function(item, label, opt_po
       break;
   }
 
-  var fill = series.getFinalFill(true, pointState);
-  var stroke = series.getFinalStroke(true, pointState);
 
-  label.background()
-      .enabled(true)
-      .fill(fill)
-      .stroke(stroke);
+  var shapes = iterator.meta('shapes');
+  if (shapes) {
+    var fill = iterator.meta('fill');
+    var stroke = iterator.meta('stroke');
+
+    label.background()
+        .enabled(true)
+        .fill(fill)
+        .stroke(stroke);
+  }
 
   return label;
 };
