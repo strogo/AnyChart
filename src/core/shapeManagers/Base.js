@@ -213,9 +213,7 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
   var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
 
-  console.log(fill, stroke);
-
-  shape.fill(fill);
+  shape.fill(fill);            
   shape.stroke(stroke);
   shape.disableStrokeScaling(true);
   shape.zIndex(descriptor.zIndex + baseZIndex);
