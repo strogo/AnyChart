@@ -257,7 +257,7 @@ anychart.core.series.Cartesian.prototype.prepareData = function() {
 //
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
-anychart.core.series.Cartesian.prototype.getColorResolutionContext = function(opt_baseColor, opt_ignorePointSettings) {
+anychart.core.series.Cartesian.prototype.getColorResolutionContext = function(opt_baseColor, opt_ignorePointSettings, opt_ignoreColorScale) {
   var source = opt_baseColor || this.getOption('color') || 'blue';
   if (this.supportsPointSettings()) {
     var iterator = !!opt_ignorePointSettings ? this.getDetachedIterator() : this.getIterator();

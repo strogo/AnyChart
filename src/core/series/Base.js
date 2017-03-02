@@ -3711,7 +3711,7 @@ anychart.core.series.Base.PROPERTY_DESCRIPTORS = (function() {
       anychart.enums.PropertyHandlerType.MULTI_ARG,
       'hoverHatchFill',
       anychart.core.settings.hatchFillOrFunctionNormalizer,
-      anychart.ConsistencyState.SERIES_COLOR | anychart.ConsistencyState.SERIES_POINTS,
+      0,
       0,
       anychart.core.series.Capabilities.ANY);
 
@@ -3719,7 +3719,7 @@ anychart.core.series.Base.PROPERTY_DESCRIPTORS = (function() {
       anychart.enums.PropertyHandlerType.MULTI_ARG,
       'selectHatchFill',
       anychart.core.settings.hatchFillOrFunctionNormalizer,
-      anychart.ConsistencyState.SERIES_COLOR | anychart.ConsistencyState.SERIES_POINTS,
+      0,
       0,
       anychart.core.series.Capabilities.ANY);
 

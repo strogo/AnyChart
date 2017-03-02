@@ -450,7 +450,7 @@ anychart.core.ChartWithSeries.prototype.invalidateWidthBasedSeries = function() 
 anychart.core.ChartWithSeries.prototype.invalidateSizeBasedSeries = function() {
   for (var i = this.seriesList.length; i--;) {
     if (this.seriesList[i].isSizeBased())
-      this.seriesList[i].invalidate(anychart.ConsistencyState.SERIES_POINTS);
+      this.seriesList[i].invalidate(anychart.ConsistencyState.SERIES_POINTS | anychart.ConsistencyState.BOUNDS);
   }
 };
 
