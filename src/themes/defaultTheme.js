@@ -2975,7 +2975,8 @@ goog.provide('anychart.themes.defaultTheme');
           'yScale': null,
           'a11y': {
             'titleFormatter': 'Series named {%SeriesName}'
-          }
+          },
+          'clip': false
         },
         'choropleth': {
           'labels': {
