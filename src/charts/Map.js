@@ -3381,7 +3381,9 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     }
 
     for (i = this.seriesList.length; i--;) {
-      this.seriesList[i].invalidate(anychart.ConsistencyState.BOUNDS, anychart.Signal.NEEDS_REDRAW);
+      series = this.seriesList[i];
+      series.parentBounds(this.dataBounds_);
+      series.invalidate(anychart.ConsistencyState.BOUNDS, anychart.Signal.NEEDS_REDRAW);
     }
     var state = anychart.ConsistencyState.MAP_LABELS;
     if (this.isSvgGeoData())

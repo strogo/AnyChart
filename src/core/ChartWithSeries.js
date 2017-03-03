@@ -662,8 +662,10 @@ anychart.core.ChartWithSeries.prototype.calcBubbleSizes = function() {
       this.seriesList[i].calculateSizeScale(minMax);
   }
   for (i = this.seriesList.length; i--;) {
-    if (this.seriesList[i].isSizeBased())
+    if (this.seriesList[i].isSizeBased()) {
+      debugger;
       this.seriesList[i].setAutoSizeScale(minMax[0], minMax[1], this.minBubbleSize_, this.maxBubbleSize_);
+    }
   }
 };
 

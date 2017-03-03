@@ -2686,6 +2686,7 @@ anychart.core.series.Base.prototype.draw = function() {
 
   // resolving bounds
   if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS)) {
+    debugger;
     this.pixelBoundsCache = this.getPixelBounds();
     this.boundsWithoutAxes = this.axesLinesSpace_ ?
         this.axesLinesSpace_.tightenBounds(this.pixelBoundsCache) :
@@ -3943,10 +3944,9 @@ anychart.core.series.Base.PROPERTY_DESCRIPTORS = (function() {
       anychart.enums.PropertyHandlerType.SINGLE_ARG,
       'curvature',
       anychart.core.settings.numberNormalizer,
-      anychart.ConsistencyState.SERIES_POINTS | anychart.Signal.NEED_UPDATE_OVERLAP,
-      anychart.Signal.NEEDS_REDRAW,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP,
       anychart.core.drawers.Capabilities.ANY);
-
   return map;
 })();
 

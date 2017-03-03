@@ -58,20 +58,6 @@ anychart.core.series.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.ConsistencyState.MAP_COLOR_SCALE;
 
 
-/**
- * Series element z-index in series root layer.
- * @type {number}
- */
-anychart.core.series.Map.ZINDEX_SERIES = 1;
-
-
-/**
- * Hatch fill z-index in series root layer.
- * @type {number}
- */
-anychart.core.series.Map.ZINDEX_HATCH_FILL = 2;
-
-
 //endregion
 //region --- Infrastructure
 /** @inheritDoc */
@@ -82,11 +68,6 @@ anychart.core.series.Map.prototype.getCategoryWidth = function() {
 
 //endregion
 //region --- Class prop
-/**
- * Map of series constructors by type.
- * @type {Object.<string, Function>}
- */
-anychart.core.series.Map.SeriesTypesMap = {};
 
 
 /**
@@ -769,18 +750,6 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
   var pointMarker = iterator.get('marker');
   var hoverPointMarker = iterator.get('hoverMarker');
   var selectPointMarker = iterator.get('selectMarker');
@@ -816,17 +785,6 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
       this.applyZoomMoveTransformToMarker(marker, pointState);
     }
   }
-
-
-
-
-
-
-
-
-
-
-
 
   pointLabel = iterator.get('label');
   labelEnabledState = pointLabel && goog.isDef(pointLabel['enabled']) ? pointLabel['enabled'] : null;
@@ -989,7 +947,7 @@ anychart.core.series.Map.prototype.finalizeDrawing = function() {
 
 //endregion
 //region --- Legend
-// /** @inheritDoc */
+/** @inheritDoc */
 anychart.core.series.Map.prototype.getLegendItemData = function(itemsTextFormatter) {
   var legendItem = this.legendItem();
   legendItem.markAllConsistent();
@@ -1640,22 +1598,9 @@ anychart.core.series.Map.prototype.setupByJSON = function(config, opt_default) {
 /** @suppress {deprecated} */
 (function() {
   var proto = anychart.core.series.Map.prototype;
-  // proto['color'] = proto.color;
-  //
-  // proto['selectFill'] = proto.selectFill;
-  // proto['hoverFill'] = proto.hoverFill;
-  // proto['fill'] = proto.fill;
-  //
-  // proto['selectStroke'] = proto.selectStroke;
-  // proto['hoverStroke'] = proto.hoverStroke;
-  // proto['stroke'] = proto.stroke;
-  //
-  // proto['selectHatchFill'] = proto.selectHatchFill;
-  // proto['hoverHatchFill'] = proto.hoverHatchFill;
-  // proto['hatchFill'] = proto.hatchFill;
+  proto['overlapMode'] = proto.overlapMode;
 
   proto['geoIdField'] = proto.geoIdField;
-  proto['overlapMode'] = proto.overlapMode;
   proto['transformXY'] = proto.transformXY;
 
   proto['colorScale'] = proto.colorScale;
