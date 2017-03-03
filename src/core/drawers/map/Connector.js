@@ -352,7 +352,6 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
   var i, len, current_x, current_y;
   var start_x = 0;
   var start_y = 0;
-  var paths = [];
   var points = [];
   var connectorsDist = [];
   var sumDist = 0;
@@ -365,6 +364,7 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
   for (i = 0, len = referenceValues.length; i < len; i += 2) {
     /** @type {!acgraph.vector.Path} */
     var path = /** @type {!acgraph.vector.Path} */(shapes['path']);
+    var hatchFillPath = /** @type {!acgraph.vector.Path} */(shapes['hatchFill']);
 
     current_x = referenceValues[i];
     current_y = referenceValues[i + 1];
@@ -455,11 +455,6 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
             directionRltAngle,
             /** @type {number} */(curvatureBasePointAngle));
 
-
-        // this.makeInteractive(path);
-        paths.push(path);
-
-
         var eventHandlerParams;
         if (needsEventHandlerPath) {
           eventHandlerParams = this.drawConnector_(
@@ -479,6 +474,7 @@ anychart.core.drawers.map.Connector.prototype.drawPoint_ = function(point, shape
               /** @type {number} */(curvatureBasePointAngle));
         }
 
+        hatchFillPath.deserialize(path.serializePathArgs());
         points.push.apply(points, connectorParams);
         connectorsDist.push(dist);
         sumDist += dist;
