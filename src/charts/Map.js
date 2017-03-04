@@ -321,7 +321,7 @@ anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.charts.Map, an
  */
 anychart.charts.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.core.ChartWithSeries.prototype.SUPPORTED_CONSISTENCY_STATES |
-    anychart.ConsistencyState.MAP_APPEARANCE |
+    anychart.ConsistencyState.APPEARANCE |
     anychart.ConsistencyState.MAP_LABELS |
     anychart.ConsistencyState.MAP_SCALE |
     anychart.ConsistencyState.MAP_GEO_DATA |
@@ -1419,11 +1419,11 @@ anychart.charts.Map.prototype.doAdditionActionsOnMouseOverAndMove = function(ind
   var colorRange = this.getCurrentScene().colorRange();
   index = goog.isArray(index) ? index.length ? index[0] : NaN : index;
   if (colorRange && colorRange.target() && !isNaN(index)) {
-    var target = colorRange.target();
+    var target = /** @type {anychart.core.series.Map} */(colorRange.target());
     if (target == series) {
       var iterator = target.getIterator();
       iterator.select(index);
-      var value = iterator.get(target.getYValueNames()[1]);
+      var value = iterator.get(target.drawer.valueFieldName);
       colorRange.showMarker(/** @type {number} */(value));
     }
   }
@@ -1481,19 +1481,22 @@ anychart.charts.Map.prototype.updateSeriesOnZoomOrMove = function() {
 
   for (i = this.seriesList.length; i--;) {
     var series = this.seriesList[i];
-    series.enabled() && series.updateOnZoomOrMove();
+    if (series.enabled())
+      series.updateOnZoomOrMove();
   }
 
   for (i = this.callouts_.length; i--;) {
     var callout = this.callouts_[i];
-    callout.enabled() && callout.updateOnZoomOrMove();
+    if (callout.enabled())
+      callout.updateOnZoomOrMove();
   }
 
   if (this.axesSettings_) {
     var axes = this.axesSettings_.getItems();
     for (i = 0; i < axes.length; i++) {
       var axis = axes[i];
-      axis.enabled() && axis.updateOnZoomOrMove(tx);
+      if (axis.enabled())
+        axis.updateOnZoomOrMove(tx);
     }
   }
 
@@ -1501,7 +1504,8 @@ anychart.charts.Map.prototype.updateSeriesOnZoomOrMove = function() {
     var grids = this.gridSettings_.getItems();
     for (i = grids.length; i--;) {
       var grid = grids[i];
-      grid.enabled() && grid.updateOnZoomOrMove(tx);
+      if (grid.enabled())
+        grid.updateOnZoomOrMove(tx);
     }
   }
 };
@@ -1582,7 +1586,7 @@ anychart.charts.Map.prototype.colorRangeInvalidated_ = function(event) {
   var signal = 0;
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
     state |= anychart.ConsistencyState.MAP_COLOR_RANGE |
-        anychart.ConsistencyState.SERIES_CHART_SERIES | anychart.ConsistencyState.MAP_APPEARANCE;
+        anychart.ConsistencyState.SERIES_CHART_SERIES | anychart.ConsistencyState.APPEARANCE;
     signal |= anychart.Signal.NEEDS_REDRAW;
     this.invalidateSeries_();
   }
@@ -1791,53 +1795,10 @@ anychart.charts.Map.prototype.onCrosshairSignal_ = function(event) {
 //
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
-anychart.charts.Map.prototype.createSeriesByType = function(type, data, opt_csvSettings) {
-  var configAndType = this.getConfigByType(type);
-  if (configAndType) {
-    type = /** @type {string} */(configAndType[0]);
-    var config = /** @type {anychart.core.series.TypeConfig} */(configAndType[1]);
-    var series = /** @type {!anychart.core.series.Map} */(this.createSeriesInstance(type, config));
-
-    var lastSeries = this.seriesList[this.seriesList.length - 1];
-    var index = lastSeries ? /** @type {number} */ (lastSeries.autoIndex()) + 1 : 0;
-    this.seriesList.push(series);
-
-    var inc = index * anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER;
-
-    series.id(index.toString());
-    series.autoIndex(index);
-    series.data(data, opt_csvSettings);
-    series.setAutoZIndex(anychart.charts.Map.ZINDEX_SERIES + inc);
-
-    // series.labels().setAutoZIndex(anychart.charts.Map.ZINDEX_LABEL + inc + anychart.charts.Map.ZINDEX_INCREMENT_MULTIPLIER / 2);
-
-    series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
-    if (this.internalGeoData)
-      series.setGeoData(this.internalGeoData);
-
-    series.setAutoColor(this.palette().itemAt(index));
-    series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(index)));
-    series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(index)));
-
-    // if (series.supportsMarkers()) {
-    //   series.markers().setAutoZIndex(anychart.charts.Map.ZINDEX_MARKER + inc);
-    //   series.markers().setAutoFill((/** @type {anychart.core.series.Map} */ (series)).getMarkerFill());
-    //   series.markers().setAutoStroke((/** @type {anychart.core.series.Map} */ (series)).getMarkerStroke());
-    // }
-
-    // series.setup(this.defaultSeriesSettings()[type]);
-
-    series.listenSignals(this.seriesInvalidated, this);
-    this.invalidate(
-        anychart.ConsistencyState.SERIES_CHART_SERIES |
-        anychart.ConsistencyState.CHART_LEGEND,
-        anychart.Signal.NEEDS_REDRAW);
-  } else {
-    anychart.core.reporting.error(anychart.enums.ErrorCode.NO_FEATURE_IN_MODULE, null, [type + ' series']);
-    series = null;
-  }
-
-  return series;
+anychart.charts.Map.prototype.setupSeries = function(series) {
+  series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
+  if (this.internalGeoData)
+    series.setGeoData(this.internalGeoData);
 };
 
 
@@ -1860,7 +1821,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
     state = anychart.ConsistencyState.SERIES_CHART_SERIES;
     if ((/** @type {anychart.core.series.Map} */(event['target'])).needsUpdateMapAppearance())
-      state |= anychart.ConsistencyState.MAP_APPEARANCE;
+      state |= anychart.ConsistencyState.APPEARANCE;
   }
   if (event.hasSignal(anychart.Signal.NEED_UPDATE_OVERLAP)) {
     state |= anychart.ConsistencyState.MAP_LABELS;
@@ -1876,7 +1837,7 @@ anychart.charts.Map.prototype.seriesInvalidated = function(event) {
         anychart.ConsistencyState.CHART_LEGEND |
         anychart.ConsistencyState.MAP_LABELS;
     if ((/** @type {anychart.core.series.Map} */(event['target'])).needsUpdateMapAppearance())
-      state |= anychart.ConsistencyState.MAP_APPEARANCE;
+      state |= anychart.ConsistencyState.APPEARANCE;
     for (var i = this.seriesList.length; i--;)
       this.seriesList[i].invalidate(
           anychart.ConsistencyState.BOUNDS |
@@ -2088,7 +2049,7 @@ anychart.charts.Map.prototype.unboundRegions = function(opt_value) {
     } else {
       this.unboundRegionsSettings_ = anychart.enums.normalizeMapUnboundRegionsMode(opt_value, anychart.enums.MapUnboundRegionsMode.HIDE);
     }
-    this.invalidate(anychart.ConsistencyState.MAP_APPEARANCE, anychart.Signal.NEEDS_REDRAW);
+    this.invalidate(anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
     return this;
   }
   return this.unboundRegionsSettings_;
@@ -2105,7 +2066,7 @@ anychart.charts.Map.prototype.geoIdField = function(opt_value) {
     if (opt_value != this.geoIdField_) {
       this.geoIdField_ = opt_value;
       this.invalidate(
-          anychart.ConsistencyState.MAP_APPEARANCE |
+          anychart.ConsistencyState.APPEARANCE |
           anychart.ConsistencyState.MAP_GEO_DATA_INDEX,
           anychart.Signal.NEEDS_REDRAW);
     }
@@ -2155,7 +2116,7 @@ anychart.charts.Map.prototype.geoData = function(opt_data) {
           anychart.ConsistencyState.MAP_GEO_DATA_INDEX |
           anychart.ConsistencyState.MAP_COLOR_RANGE |
           anychart.ConsistencyState.SERIES_CHART_HATCH_FILL_PALETTE |
-          anychart.ConsistencyState.MAP_APPEARANCE, anychart.Signal.NEEDS_REDRAW);
+          anychart.ConsistencyState.APPEARANCE, anychart.Signal.NEEDS_REDRAW);
     }
     return this;
   }
@@ -3387,7 +3348,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     }
     var state = anychart.ConsistencyState.MAP_LABELS;
     if (this.isSvgGeoData())
-      state |= anychart.ConsistencyState.MAP_APPEARANCE;
+      state |= anychart.ConsistencyState.APPEARANCE;
     this.invalidate(state, anychart.Signal.NEEDS_REDRAW);
   }
 
@@ -3606,7 +3567,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     this.markConsistent(anychart.ConsistencyState.MAP_CROSSHAIR);
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.MAP_APPEARANCE)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.APPEARANCE)) {
     var path;
     if (this.unboundRegionsSettings_ == anychart.enums.MapUnboundRegionsMode.AS_IS) {
       for (i = 0, len = this.mapPaths.length; i < len; i++) {
@@ -3639,7 +3600,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     this.invalidateSeries_();
     this.invalidate(anychart.ConsistencyState.SERIES_CHART_SERIES);
 
-    this.markConsistent(anychart.ConsistencyState.MAP_APPEARANCE);
+    this.markConsistent(anychart.ConsistencyState.APPEARANCE);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.SERIES_CHART_SERIES)) {

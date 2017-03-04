@@ -2686,7 +2686,6 @@ anychart.core.series.Base.prototype.draw = function() {
 
   // resolving bounds
   if (this.hasInvalidationState(anychart.ConsistencyState.BOUNDS)) {
-    debugger;
     this.pixelBoundsCache = this.getPixelBounds();
     this.boundsWithoutAxes = this.axesLinesSpace_ ?
         this.axesLinesSpace_.tightenBounds(this.pixelBoundsCache) :

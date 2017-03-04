@@ -145,7 +145,6 @@ anychart.ConsistencyState = {
   MAP_AXES: 1 << 25,
   MAP_GRIDS: 1 << 26,
   MAP_CROSSHAIR: 1 << 27,
-  MAP_APPEARANCE: 1 << 28,
   //---------------------------------- HEAT MAP STATES (CHART) ---------------------------------
   HEATMAP_SCALES: 1 << 12,
   HEATMAP_SERIES: 1 << 13,

@@ -216,6 +216,29 @@ anychart.core.ChartWithSeries.prototype.createSeriesInstance = goog.abstractMeth
 
 
 /**
+ * Setup series.
+ * @param {!(anychart.core.series.Cartesian|anychart.core.series.Map)} series .
+ */
+anychart.core.ChartWithSeries.prototype.setupSeries = function(series) {
+  var lastSeries = this.seriesList[this.seriesList.length - 1];
+  var index = lastSeries ? /** @type {number} */(lastSeries.autoIndex()) + 1 : 0;
+  this.seriesList.push(series);
+  var inc = index * anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER;
+  var seriesZIndex = (series.isLineBased() ?
+          anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES :
+          anychart.core.ChartWithSeries.ZINDEX_SERIES) + inc;
+
+  series.autoIndex(index);
+  series.setAutoZIndex(seriesZIndex);
+  series.setAutoColor(this.palette().itemAt(index));
+  series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(index)));
+  series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(index)));
+  series.setParentEventTarget(this);
+  series.listenSignals(this.seriesInvalidated, this);
+};
+
+
+/**
  * @param {string} type Series type.
  * @param {?(anychart.data.View|anychart.data.Set|Array|string)} data Data for the series.
  * @param {Object.<string, (string|boolean)>=} opt_csvSettings If CSV string is passed, you can pass CSV parser settings
@@ -229,23 +252,9 @@ anychart.core.ChartWithSeries.prototype.createSeriesByType = function(type, data
     type = /** @type {string} */(configAndType[0]);
     var config = /** @type {anychart.core.series.TypeConfig} */(configAndType[1]);
     var series = this.createSeriesInstance(type, config);
-
-    var lastSeries = this.seriesList[this.seriesList.length - 1];
-    var index = lastSeries ? /** @type {number} */(lastSeries.autoIndex()) + 1 : 0;
-    this.seriesList.push(series);
-    var inc = index * anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER;
-    var seriesZIndex = (series.isLineBased() ?
-            anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES :
-            anychart.core.ChartWithSeries.ZINDEX_SERIES) + inc;
-
-    series.autoIndex(index);
     series.data(data, opt_csvSettings);
-    series.setAutoZIndex(seriesZIndex);
-    series.setAutoColor(this.palette().itemAt(index));
-    series.setAutoMarkerType(/** @type {anychart.enums.MarkerType} */(this.markerPalette().itemAt(index)));
-    series.setAutoHatchFill(/** @type {acgraph.vector.HatchFill|acgraph.vector.PatternFill} */(this.hatchFillPalette().itemAt(index)));
-    series.setParentEventTarget(this);
-    series.listenSignals(this.seriesInvalidated, this);
+
+    this.setupSeries(series);
 
     this.invalidate(
         // When you add 3D series, bounds may change (eg. afterDraw case).
@@ -350,7 +359,7 @@ anychart.core.ChartWithSeries.prototype.removeSeriesAt = function(index) {
     goog.array.splice(this.seriesList, index, 1);
     goog.dispose(series);
     this.invalidate(
-        anychart.ConsistencyState.MAP_APPEARANCE |
+        anychart.ConsistencyState.APPEARANCE |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
         anychart.ConsistencyState.SCALE_CHART_SCALES |
@@ -376,7 +385,7 @@ anychart.core.ChartWithSeries.prototype.removeAllSeries = function() {
     this.seriesList = [];
     goog.disposeAll(series);
     this.invalidate(
-        anychart.ConsistencyState.MAP_APPEARANCE |
+        anychart.ConsistencyState.APPEARANCE |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
         anychart.ConsistencyState.SCALE_CHART_SCALES |
@@ -663,7 +672,6 @@ anychart.core.ChartWithSeries.prototype.calcBubbleSizes = function() {
   }
   for (i = this.seriesList.length; i--;) {
     if (this.seriesList[i].isSizeBased()) {
-      debugger;
       this.seriesList[i].setAutoSizeScale(minMax[0], minMax[1], this.minBubbleSize_, this.maxBubbleSize_);
     }
   }
