@@ -179,7 +179,7 @@ anychart.core.series.Base.prototype.SUPPORTED_SIGNALS =
 /**
  * Labels z-index.
  */
-anychart.core.series.Base.prototype.LABELS_ZINDEX = anychart.core.shapeManagers.MAP_LABELS_ZINDEX;
+anychart.core.series.Base.prototype.LABELS_ZINDEX = anychart.core.shapeManagers.LABELS_ZINDEX;
 
 
 //endregion
