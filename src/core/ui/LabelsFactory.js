@@ -932,7 +932,7 @@ anychart.core.ui.LabelsFactory.prototype.createLabel = function() {
  * @return {anychart.core.ui.LabelsFactory} Returns itself for chaining.
  */
 anychart.core.ui.LabelsFactory.prototype.draw = function() {
-  if (!this.checkDrawingNeeded())
+  if (this.isDisposed())
     return this;
 
   if (!this.layer_) {
