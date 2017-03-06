@@ -162,7 +162,7 @@ anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.core.RadarPola
  * @return {!(anychart.core.grids.Radar|anychart.core.grids.Polar)}
  * @protected
  */
-anychart.core.RadarPolarChart.prototype.createGridInstance = goog.abstractMethod();
+anychart.core.RadarPolarChart.prototype.createGridInstance = goog.abstractMethod;
 
 
 /**
