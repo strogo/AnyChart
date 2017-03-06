@@ -210,32 +210,8 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
   }
   this.shapePoolPointers[shapeType]++;
   this.usedShapes[shapeType].push(shape);
-  var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
-  var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
 
-  shape.fill(fill);            
-  shape.stroke(stroke);
-  shape.disableStrokeScaling(true);
-  shape.zIndex(descriptor.zIndex + baseZIndex);
-
-  var iterator = this.series.getIterator();
-  iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
-  iterator.meta('stroke', stroke);
-
-  if (this.addInterctivityInfo)
-    this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
-
-  // we want to avoid adding invisible hatchFill shapes to the layer.
-  if (descriptor.isHatchFill && !(
-      fill ||
-      (state != anychart.PointState.NORMAL && descriptor.fill(this.series, anychart.PointState.NORMAL)) ||
-      (state != anychart.PointState.HOVER && descriptor.fill(this.series, anychart.PointState.HOVER)) ||
-      (state != anychart.PointState.SELECT && descriptor.fill(this.series, anychart.PointState.SELECT)))) {
-    shape.parent(null);
-  } else {
-    shape.parent(this.layer);
-  }
-  return shape;
+  return this.configureShape(name, state, indexOrGlobal, baseZIndex, shape, true);
 };
 
 
@@ -246,36 +222,40 @@ anychart.core.shapeManagers.Base.prototype.createShape = function(name, state, i
  * @param {number|boolean} indexOrGlobal
  * @param {number} baseZIndex
  * @param {acgraph.vector.Shape} shape
+ * @param {boolean=} opt_needLayer
  * @return {acgraph.vector.Shape}
  * @protected
  */
-anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state, indexOrGlobal, baseZIndex, shape) {
+anychart.core.shapeManagers.Base.prototype.configureShape = function(name, state, indexOrGlobal, baseZIndex, shape, opt_needLayer) {
   var descriptor = this.defs[name];
 
   var fill = /** @type {acgraph.vector.Fill|acgraph.vector.PatternFill} */(descriptor.fill(this.series, state));
   var stroke = /** @type {acgraph.vector.Stroke} */(descriptor.stroke(this.series, state));
+
   shape.fill(fill);
   shape.stroke(stroke);
   shape.disableStrokeScaling(true);
   shape.zIndex(descriptor.zIndex + baseZIndex);
 
-  var iterator = this.series.getIterator();
-  iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
-  iterator.meta('stroke', stroke);
-
   if (this.addInterctivityInfo) {
     this.setupInteractivity(shape, descriptor.isHatchFill, indexOrGlobal);
   }
 
-  if (descriptor.isHatchFill) {
-    if (!(fill ||
-        (state != anychart.PointState.NORMAL && descriptor.fill(this.series, anychart.PointState.NORMAL)) ||
-        (state != anychart.PointState.HOVER && descriptor.fill(this.series, anychart.PointState.HOVER)) ||
-        (state != anychart.PointState.SELECT && descriptor.fill(this.series, anychart.PointState.SELECT)))) {
+  var fillCondition = !(fill ||
+      (state != anychart.PointState.NORMAL && descriptor.fill(this.series, anychart.PointState.NORMAL)) ||
+      (state != anychart.PointState.HOVER && descriptor.fill(this.series, anychart.PointState.HOVER)) ||
+      (state != anychart.PointState.SELECT && descriptor.fill(this.series, anychart.PointState.SELECT)));
+
+  var layerCondition = opt_needLayer ? descriptor.isHatchFill && fillCondition : descriptor.isHatchFill;
+
+  if (layerCondition) {
+    if (fillCondition) {
       shape.parent(null);
     } else {
       shape.parent(this.layer);
     }
+  } else if (opt_needLayer) {
+    shape.parent(this.layer);
   }
   return shape;
 };

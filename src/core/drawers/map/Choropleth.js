@@ -80,6 +80,12 @@ anychart.core.drawers.map.Choropleth.prototype.drawSubsequentPoint = function(po
         element.visible(true);
         var shapes = this.shapesManager.getShapesGroup(state, undefined, undefined, element);
 
+        var mainElement = shapes['foreignFill'];
+        if (mainElement) {
+          point.meta('fill', mainElement.fill());
+          point.meta('stroke', mainElement.stroke());
+        }
+
         var hatchFillElement = /** @type {!acgraph.vector.Path} */(shapes['hatchFill']);
         hatchFillElement.deserialize(element.serializePathArgs());
       }, this);
