@@ -703,7 +703,7 @@ anychart.core.ui.Tooltip.prototype.showAsSingle_ = function(points, clientX, cli
   var firstSeries = firstPoint['series'];
   this.tooltipInUse_ = opt_useUnionAsSingle ? this : firstSeries.tooltip();
 
-  if (!this.enabled()) {
+  if (!this.tooltipInUse_.enabled()) {
     return;
   }
 
@@ -1032,6 +1032,10 @@ anychart.core.ui.Tooltip.prototype.showForSeriesPoints = function(points, client
  * @private
  */
 anychart.core.ui.Tooltip.prototype.showForPosition_ = function(clientX, clientY) {
+  if (!this.enabled()) {
+    return;
+  }
+
   this.updateForceInvalidation();
 
   if (!this.getRootLayer_().parent()) {
