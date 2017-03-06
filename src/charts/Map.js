@@ -4919,7 +4919,7 @@ anychart.charts.Map.prototype.legendItemClick = function(item, event) {
       var iterator = series.getResetIterator();
 
       while (iterator.advance()) {
-        var pointValue = iterator.get(series.getYValueNames()[1]);
+        var pointValue = iterator.get(series.valueFieldName);
         if (range == scale.getRangeByValue(pointValue)) {
           points.push(iterator.getIndex());
         }
@@ -4965,7 +4965,7 @@ anychart.charts.Map.prototype.legendItemOver = function(item, event) {
 
       var points = [];
       while (iterator.advance()) {
-        var pointValue = iterator.get(series.getYValueNames()[1]);
+        var pointValue = iterator.get(series.valueFieldName);
         if (range == scale.getRangeByValue(pointValue)) {
           points.push(iterator.getIndex());
         }
