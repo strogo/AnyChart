@@ -759,7 +759,7 @@ anychart.core.RadarPolarChart.prototype.serializeGrid_ = function(item, scales, 
 //------------------------------------------------------------------------------
 //exports
 (function() {
-  var proto = anychart.charts.Radar.prototype;
+  var proto = anychart.core.RadarPolarChart.prototype;
   proto['xScale'] = proto.xScale;//doc|ex
   proto['yScale'] = proto.yScale;//doc|ex
   proto['grid'] = proto.grid;//doc|ex
