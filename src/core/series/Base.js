@@ -176,6 +176,12 @@ anychart.core.series.Base.prototype.SUPPORTED_SIGNALS =
     anychart.Signal.NEEDS_UPDATE_A11Y;
 
 
+/**
+ * Labels z-index.
+ */
+anychart.core.series.Base.prototype.LABELS_ZINDEX = anychart.core.shapeManagers.MAP_LABELS_ZINDEX;
+
+
 //endregion
 //region --- Properties
 //----------------------------------------------------------------------------------------------------------------------
@@ -2732,7 +2738,7 @@ anychart.core.series.Base.prototype.draw = function() {
     stateFactoriesEnabled = /** @type {boolean} */(this.hoverLabels().enabled() || this.selectLabels().enabled());
     if (this.prepareFactory(factory, stateFactoriesEnabled, this.planHasPointLabels(),
             anychart.core.series.Capabilities.SUPPORTS_LABELS, anychart.ConsistencyState.SERIES_LABELS)) {
-      factory.setAutoZIndex(/** @type {number} */(this.zIndex() + anychart.core.shapeManagers.LABELS_ZINDEX));
+      factory.setAutoZIndex(/** @type {number} */(this.zIndex() + this.LABELS_ZINDEX));
       // see DVF-2259
       factory.invalidate(anychart.ConsistencyState.Z_INDEX);
       elementsDrawers.push(this.drawLabel);

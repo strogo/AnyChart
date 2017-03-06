@@ -150,8 +150,12 @@ anychart.charts.Map = function() {
     this.zoomingInProgress = false;
     this.mapTx = this.getMapLayer().getFullTransformation().clone();
 
-    for (var i = this.seriesList.length; i--;)
-      this.seriesList[i].invalidate(anychart.ConsistencyState.SERIES_POINTS);
+    var series;
+    for (var i = this.seriesList.length; i--;) {
+      series = this.seriesList[i];
+      series.invalidate(anychart.ConsistencyState.SERIES_POINTS);
+      series.draw();
+    }
 
     this.applyLabelsOverlapState_ = true;
     this.applyLabelsOverlapState();
@@ -281,7 +285,12 @@ anychart.charts.Map.prototype.seriesConfig = (function() {
     ],
     secondaryShapesConfig: null,
     postProcessor: null,
-    capabilities: capabilities
+    capabilities: (
+        anychart.core.series.Capabilities.ALLOW_INTERACTIVITY |
+        anychart.core.series.Capabilities.ALLOW_POINT_SETTINGS |
+        // anychart.core.series.Capabilities.SUPPORTS_MARKERS |
+        anychart.core.series.Capabilities.SUPPORTS_LABELS |
+        0)
   };
   res[anychart.enums.MapSeriesType.BUBBLE] = {
     drawerType: anychart.enums.SeriesDrawerTypes.MAP_BUBBLE,
@@ -383,59 +392,10 @@ anychart.charts.Map.ZINDEX_MAP = 10;
 
 
 /**
- * Series hatch fill z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_CHORPLETH_HATCH_FILL = 11;
-
-
-/**
- * Series labels z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_CHORPLETH_LABELS = 12;
-
-
-/**
- * Series markers z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_CHORPLETH_MARKERS = 13;
-
-
-/**
  * Axis z-index in chart root layer.
  * @type {number}
  */
 anychart.charts.Map.ZINDEX_AXIS = 20;
-
-
-/**
- * Series z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_SERIES = 30;
-
-
-/**
- * Marker z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_HATCH_FILL = 31;
-
-
-/**
- * Label z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_LABEL = 40;
-
-
-/**
- * Marker z-index in chart root layer.
- * @type {number}
- */
-anychart.charts.Map.ZINDEX_MARKER = 40;
 
 
 /**
@@ -2885,12 +2845,6 @@ anychart.charts.Map.prototype.getBoundsWithoutAxes = function(bounds) {
 };
 
 
-// /** @inheritDoc */
-// anychart.charts.Map.prototype.beforeDraw = function() {
-//
-// };
-
-
 /** @inheritDoc */
 anychart.charts.Map.prototype.calculate = function() {
   var i, series, tx, len, geom;
@@ -2962,7 +2916,7 @@ anychart.charts.Map.prototype.calculate = function() {
 
     if (!this.dataLayer_) {
       this.dataLayer_ = this.rootElement.layer();
-      this.dataLayer_.zIndex(anychart.charts.Map.ZINDEX_SERIES);
+      this.dataLayer_.zIndex(anychart.core.ChartWithSeries.ZINDEX_SERIES);
     }
 
     needRecalculateLatLonScaleRange = true;

@@ -58,6 +58,12 @@ anychart.core.series.Map.prototype.SUPPORTED_CONSISTENCY_STATES =
     anychart.ConsistencyState.MAP_COLOR_SCALE;
 
 
+/**
+ * Labels z-index.
+ */
+anychart.core.series.Map.prototype.LABELS_ZINDEX = anychart.core.shapeManagers.MAP_LABELS_ZINDEX;
+
+
 //endregion
 //region --- Infrastructure
 /** @inheritDoc */
