@@ -1,14 +1,7 @@
 goog.provide('anychart.core.RadarPolarChart');
 
 goog.require('anychart.core.ChartWithSeries');
-
-goog.require('anychart.core.axes.Polar');
-goog.require('anychart.core.axes.Radar');
 goog.require('anychart.core.axes.Radial');
-goog.require('anychart.core.grids.Polar');
-goog.require('anychart.core.grids.Radar');
-
-goog.require('anychart.core.series.RadarPolar');
 goog.require('anychart.core.reporting');
 goog.require('anychart.enums');
 goog.require('anychart.palettes');
@@ -18,25 +11,26 @@ goog.require('anychart.scales');
 
 /**
  * Common chart class for radar and polar.
+ * @param {boolean} categorizeData
  * @constructor
  * @extends {anychart.core.ChartWithSeries}
  */
-anychart.core.RadarPolarChart = function() {
-  anychart.core.RadarPolarChart.base(this, 'constructor');
+anychart.core.RadarPolarChart = function(categorizeData) {
+  anychart.core.RadarPolarChart.base(this, 'constructor', categorizeData);
 
   /**
-   * @type {Array.<anychart.core.grids.Radar>}
+   * @type {Array.<anychart.core.grids.Radar|anychart.core.grids.Polar>}
    * @private
    */
   this.grids_ = [];
 
   /**
-   * @type {Array.<anychart.core.grids.Radar>}
+   * @type {Array.<anychart.core.grids.Radar|anychart.core.grids.Polar>}
    * @private
    */
   this.minorGrids_ = [];
 };
-goog.inherits(anychart.core.RadarPolarChart, anychart.core.SeparateChart);
+goog.inherits(anychart.core.RadarPolarChart, anychart.core.ChartWithSeries);
 
 
 /**
@@ -168,9 +162,7 @@ anychart.core.ChartWithSeries.generateSeriesConstructors(anychart.core.RadarPola
  * @return {!(anychart.core.grids.Radar|anychart.core.grids.Polar)}
  * @protected
  */
-anychart.core.RadarPolarChart.prototype.createGridInstance = function() {
-  return new anychart.core.grids.Radar();
-};
+anychart.core.RadarPolarChart.prototype.createGridInstance = goog.abstractMethod();
 
 
 /**
@@ -302,7 +294,7 @@ anychart.core.RadarPolarChart.prototype.createXAxisInstance = goog.abstractMetho
 /**
  * Getter/setter for xAxis.
  * @param {(Object|boolean|null)=} opt_value Chart axis settings to set.
- * @return {!(anychart.core.axes.Radar|anychart.core.RadarPolarChart)} Axis instance by index or itself for method chaining.
+ * @return {!(anychart.core.axes.Radar|anychart.core.axes.Polar|anychart.core.RadarPolarChart)} Axis instance by index or itself for method chaining.
  */
 anychart.core.RadarPolarChart.prototype.xAxis = function(opt_value) {
   if (!this.xAxis_) {
@@ -391,7 +383,7 @@ anychart.core.RadarPolarChart.prototype.getAxisByIndex = function(index) {
 //------------------------------------------------------------------------------
 /** @inheritDoc */
 anychart.core.RadarPolarChart.prototype.setupSeriesBeforeDraw = function(series, opt_topAxisPadding, opt_rightAxisPadding, opt_bottomAxisPadding, opt_leftAxisPadding) {
-  series.startAngle(this.startAngle_);
+  series['startAngle'](this.startAngle_);
 };
 
 
@@ -448,7 +440,7 @@ anychart.core.RadarPolarChart.prototype.drawContent = function(bounds) {
     axisInvalidated = true;
   }
 
-  if (this.hasInvalidationState(anychart.ConsistencyState.RADAR_GRIDS)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.AXES_CHART_GRIDS)) {
     var grids = goog.array.concat(this.grids_, this.minorGrids_);
 
     for (i = 0, count = grids.length; i < count; i++) {
@@ -458,19 +450,19 @@ anychart.core.RadarPolarChart.prototype.drawContent = function(bounds) {
         if (axisInvalidated) {
           grid.invalidate(anychart.ConsistencyState.GRIDS_POSITION);
         }
-        grid.parentBounds(this.dataBounds_);
+        grid.parentBounds(this.dataBounds);
         grid.container(this.rootElement);
         grid.startAngle(this.startAngle_);
         grid.draw();
         grid.resumeSignalsDispatching(false);
       }
     }
-    this.markConsistent(anychart.ConsistencyState.RADAR_GRIDS);
+    this.markConsistent(anychart.ConsistencyState.AXES_CHART_GRIDS);
   }
 
   //draw axes outside of data bounds
   //only inside axes ticks can intersect data bounds
-  if (this.hasInvalidationState(anychart.ConsistencyState.RADAR_AXES)) {
+  if (this.hasInvalidationState(anychart.ConsistencyState.AXES_CHART_AXES)) {
     axis = this.xAxis();
     axis.container(this.rootElement);
     axis.startAngle(this.startAngle_);
@@ -484,7 +476,7 @@ anychart.core.RadarPolarChart.prototype.drawContent = function(bounds) {
     axis.parentBounds(this.dataBounds.clone());
     axis.draw();
 
-    this.markConsistent(anychart.ConsistencyState.RADAR_AXES);
+    this.markConsistent(anychart.ConsistencyState.AXES_CHART_AXES);
   }
 
   this.drawSeries(0, 0, 0, 0);
@@ -504,16 +496,16 @@ anychart.core.RadarPolarChart.prototype.drawContent = function(bounds) {
 anychart.core.RadarPolarChart.prototype.getSeriesStatus = function(event) {
   var clientX = event['clientX'];
   var clientY = event['clientY'];
-  var xValue, index;
+  var value, index;
 
   var containerOffset = this.container().getStage().getClientPosition();
 
   var x = clientX - containerOffset.x;
   var y = clientY - containerOffset.y;
 
-  var radius = Math.min(this.dataBounds_.width, this.dataBounds_.height) / 2;
-  var cx = Math.round(this.dataBounds_.left + this.dataBounds_.width / 2);
-  var cy = Math.round(this.dataBounds_.top + this.dataBounds_.height / 2);
+  var radius = Math.min(this.dataBounds.width, this.dataBounds.height) / 2;
+  var cx = Math.round(this.dataBounds.left + this.dataBounds.width / 2);
+  var cy = Math.round(this.dataBounds.top + this.dataBounds.height / 2);
 
   var clientRadius = Math.sqrt(Math.pow(cx - x, 2) + Math.pow(cy - y, 2));
 
@@ -554,8 +546,8 @@ anychart.core.RadarPolarChart.prototype.getSeriesStatus = function(event) {
     }
 
     var minValue, maxValue;
-    for (i = 0, len = this.series_.length; i < len; i++) {
-      series = this.series_[i];
+    for (i = 0, len = this.seriesList.length; i < len; i++) {
+      series = this.seriesList[i];
       if (series.enabled()) {
         minValue = /** @type {number} */(series.xScale().inverseTransform(leftSideRatio));
         maxValue = /** @type {number} */(series.xScale().inverseTransform(rightSideRatio));
@@ -612,9 +604,9 @@ anychart.core.RadarPolarChart.prototype.getSeriesStatus = function(event) {
     goog.math.modulo(/** @type {number} */(angle), Math.PI * 2);
 
     var ratio = 1 - (angle / (Math.PI * 2));
-    for (i = 0, len = this.series_.length; i < len; i++) {
-      series = this.series_[i];
-      xValue = series.xScale().inverseTransform(ratio);
+    for (i = 0, len = this.seriesList.length; i < len; i++) {
+      series = this.seriesList[i];
+      value = series.xScale().inverseTransform(ratio);
       if (this.categorizeData) {
         var tmp = series.findX(value);
         index = tmp >= 0 ? [tmp] : [];
@@ -696,13 +688,13 @@ anychart.core.RadarPolarChart.prototype.setupByJSONWithScales = function(config,
 
 /** @inheritDoc */
 anychart.core.RadarPolarChart.prototype.serializeWithScales = function(json, scales, scaleIds) {
-  anychart.core.ChartWithAxes.base(this, 'serializeWithScales', json, scales, scaleIds);
+  anychart.core.RadarPolarChart.base(this, 'serializeWithScales', json, scales, scaleIds);
 
   var axesIds = [];
   json['startAngle'] = this.startAngle();
 
-  json['xAxis'] = this.serializeAxis_(this.xAxis(), scales, scaleIds, axesIds);
-  json['yAxis'] = this.serializeAxis_(this.yAxis(), scales, scaleIds, axesIds);
+  json['xAxis'] = this.serializeAxis_(/** @type {anychart.core.axes.Radar|anychart.core.axes.Polar} */(this.xAxis()), scales, scaleIds, axesIds);
+  json['yAxis'] = this.serializeAxis_(/** @type {anychart.core.axes.Radial} */(this.yAxis()), scales, scaleIds, axesIds);
 
   this.serializeElementsWithScales(json, 'grids', this.grids_, this.serializeGrid_, scales, scaleIds, axesIds);
   this.serializeElementsWithScales(json, 'minorGrids', this.minorGrids_, this.serializeGrid_, scales, scaleIds, axesIds);
@@ -728,7 +720,7 @@ anychart.core.RadarPolarChart.prototype.serializeAxis_ = function(item, scales, 
 
 /**
  * Serializes a grid and returns its config.
- * @param {anychart.core.grids.Linear} item
+ * @param {anychart.core.grids.Radar|anychart.core.grids.Polar} item
  * @param {Array} scales
  * @param {Object} scaleIds
  * @param {Array} axesIds

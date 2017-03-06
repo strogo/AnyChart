@@ -24,11 +24,7 @@ goog.require('anychart.modules.base');
 anychart.polar = function(var_args) {
   var chart = new anychart.charts.Polar();
   chart.setupByVal(anychart.getFullTheme('polar'), true);
-
-  for (var i = 0, count = arguments.length; i < count; i++) {
-    chart.marker(arguments[i]);
-  }
-
+  chart.addSeries.apply(this, arguments);
   return chart;
 };
 

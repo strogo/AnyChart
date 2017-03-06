@@ -1,6 +1,9 @@
 goog.provide('anychart.charts.Polar');
 
 goog.require('anychart.core.RadarPolarChart');
+goog.require('anychart.core.axes.Polar');
+goog.require('anychart.core.grids.Polar');
+goog.require('anychart.core.series.Cartesian');
 goog.require('anychart.enums');
 
 

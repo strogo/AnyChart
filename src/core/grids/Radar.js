@@ -892,7 +892,7 @@ anychart.core.grids.Radar.prototype.setupByJSON = function(config, opt_default) 
     var ax = config['axis'];
     if (goog.isNumber(ax)) {
       if (this.chart_) {
-        this.axis((/** @type {anychart.core.RadarPolarChart} */(this.chart_)).getAxisByIndex(ax));
+        this.axis(/** @type {anychart.core.axes.Radar|anychart.core.axes.Radial} */(this.chart_.getAxisByIndex(ax)));
       }
     } else if (ax instanceof anychart.core.axes.Radial || ax instanceof anychart.core.axes.Radar) {
       this.axis(ax);
