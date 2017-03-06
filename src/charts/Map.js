@@ -1799,6 +1799,8 @@ anychart.charts.Map.prototype.setupSeries = function(series) {
   series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
   if (this.internalGeoData)
     series.setGeoData(this.internalGeoData);
+
+  anychart.charts.Map.base(this, 'setupSeries', series);
 };
 
 
@@ -3349,7 +3351,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
     var state = anychart.ConsistencyState.MAP_LABELS;
     if (this.isSvgGeoData())
       state |= anychart.ConsistencyState.APPEARANCE;
-    this.invalidate(state, anychart.Signal.NEEDS_REDRAW);
+    this.invalidate(state);
   }
 
   if (this.hasInvalidationState(anychart.ConsistencyState.MAP_ZOOM)) {
