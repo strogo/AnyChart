@@ -3929,29 +3929,6 @@ anychart.core.series.Base.PROPERTY_DESCRIPTORS = (function() {
       anychart.Signal.NEEDS_RECALCULATION | anychart.Signal.NEEDS_REDRAW,
       anychart.core.drawers.Capabilities.ANY);
 
-  map['startSize'] = anychart.core.settings.createDescriptor(
-      anychart.enums.PropertyHandlerType.SINGLE_ARG,
-      'startSize',
-      anychart.core.settings.numberNormalizer,
-      anychart.ConsistencyState.SERIES_POINTS,
-      anychart.Signal.NEEDS_REDRAW,
-      anychart.core.drawers.Capabilities.ANY);
-
-  map['endSize'] = anychart.core.settings.createDescriptor(
-      anychart.enums.PropertyHandlerType.SINGLE_ARG,
-      'endSize',
-      anychart.core.settings.numberNormalizer,
-      anychart.ConsistencyState.SERIES_POINTS,
-      anychart.Signal.NEEDS_REDRAW,
-      anychart.core.drawers.Capabilities.ANY);
-
-  map['curvature'] = anychart.core.settings.createDescriptor(
-      anychart.enums.PropertyHandlerType.SINGLE_ARG,
-      'curvature',
-      anychart.core.settings.numberNormalizer,
-      anychart.ConsistencyState.SERIES_POINTS,
-      anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP,
-      anychart.core.drawers.Capabilities.ANY);
   return map;
 })();
 

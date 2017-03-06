@@ -1568,6 +1568,52 @@ anychart.core.series.Map.prototype.getPoint = function(index) {
 
 
 //endregion
+//region --- Optimized Properties
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  OptimizedProperties
+//
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * Properties that should be defined in series.Base prototype.
+ * @type {!Object.<string, anychart.core.settings.PropertyDescriptor>}
+ */
+anychart.core.series.Map.PROPERTY_DESCRIPTORS = (function() {
+  /** @type {!Object.<string, anychart.core.settings.PropertyDescriptor>} */
+  var map = {};
+  map['startSize'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'startSize',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW,
+      anychart.core.drawers.Capabilities.ANY);
+
+  map['endSize'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'endSize',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW,
+      anychart.core.drawers.Capabilities.ANY);
+
+  map['curvature'] = anychart.core.settings.createDescriptor(
+      anychart.enums.PropertyHandlerType.SINGLE_ARG,
+      'curvature',
+      anychart.core.settings.numberNormalizer,
+      anychart.ConsistencyState.SERIES_POINTS,
+      anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP,
+      anychart.core.drawers.Capabilities.ANY);
+
+  return map;
+})();
+
+
+// populating series base prototype with properties
+anychart.core.settings.populate(anychart.core.series.Map, anychart.core.series.Map.PROPERTY_DESCRIPTORS);
+
+
+//endregion
 //region --- Setup
 /** @inheritDoc */
 anychart.core.series.Map.prototype.serialize = function() {

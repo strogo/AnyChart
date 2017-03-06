@@ -216,6 +216,18 @@ anychart.core.ChartWithSeries.prototype.createSeriesInstance = goog.abstractMeth
 
 
 /**
+ * Returns base series z-index.
+ * @param {anychart.core.series.Cartesian|anychart.core.series.Map} series .
+ * @return {number}
+ */
+anychart.core.ChartWithSeries.prototype.getBaseSeriesZIndex = function(series) {
+  return series.isLineBased() ?
+      anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES :
+      anychart.core.ChartWithSeries.ZINDEX_SERIES;
+};
+
+
+/**
  * Setup series.
  * @param {!(anychart.core.series.Cartesian|anychart.core.series.Map)} series .
  */
@@ -224,9 +236,7 @@ anychart.core.ChartWithSeries.prototype.setupSeries = function(series) {
   var index = lastSeries ? /** @type {number} */(lastSeries.autoIndex()) + 1 : 0;
   this.seriesList.push(series);
   var inc = index * anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER;
-  var seriesZIndex = (series.isLineBased() ?
-          anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES :
-          anychart.core.ChartWithSeries.ZINDEX_SERIES) + inc;
+  var seriesZIndex = this.getBaseSeriesZIndex(series) + inc;
 
   series.autoIndex(index);
   series.setAutoZIndex(seriesZIndex);

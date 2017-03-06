@@ -392,6 +392,13 @@ anychart.charts.Map.ZINDEX_MAP = 10;
 
 
 /**
+ * Choropleth series z-index in chart root layer.
+ * @type {number}
+ */
+anychart.charts.Map.ZINDEX_CHOROPLETH_SERIES = 15;
+
+
+/**
  * Axis z-index in chart root layer.
  * @type {number}
  */
@@ -1754,6 +1761,14 @@ anychart.charts.Map.prototype.onCrosshairSignal_ = function(event) {
 //  Series.
 //
 //----------------------------------------------------------------------------------------------------------------------
+/** @inheritDoc */
+anychart.charts.Map.prototype.getBaseSeriesZIndex = function(series) {
+  return series.isChoropleth() ?
+      anychart.charts.Map.ZINDEX_CHOROPLETH_SERIES :
+      anychart.core.ChartWithSeries.ZINDEX_SERIES;
+};
+
+
 /** @inheritDoc */
 anychart.charts.Map.prototype.setupSeries = function(series) {
   series.setAutoGeoIdField(/** @type {string} */(this.geoIdField()));
