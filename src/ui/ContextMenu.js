@@ -269,9 +269,6 @@ anychart.ui.ContextMenu.prototype.itemsProvider = function(opt_value) {
  */
 anychart.ui.ContextMenu.prototype.handleContextMenu_ = function(e) {
   if (!this.enabledInternal_) return;
-  if (!this.isInDocument()) {
-    this.render();
-  }
   this.contextTarget_ = e['target'];
   var prepareItemsContext = {
     'event': e,
@@ -307,10 +304,10 @@ anychart.ui.ContextMenu.prototype.handleContextMenu_ = function(e) {
 
 /** @inheritDoc */
 anychart.ui.ContextMenu.prototype.render = function(opt_parentElement) {
+  anychart.ui.ContextMenu.base(this, 'render', opt_parentElement);
   if (this.extraClassNames_ && this.extraClassNames_.length) {
     goog.dom.classlist.addAll(this.getElement(), this.extraClassNames_);
   }
-  anychart.ui.ContextMenu.base(this, 'render', opt_parentElement);
 };
 
 
@@ -365,6 +362,9 @@ anychart.ui.ContextMenu.prototype.detach = function(opt_target, opt_capture) {
  * @param {number} y The client-Y associated with the show event.
  */
 anychart.ui.ContextMenu.prototype.show = function(x, y) {
+  if (!this.isInDocument()) {
+    this.render();
+  }
   this.makeMenu_();
   this.showMenu({}, x, y);
 };
