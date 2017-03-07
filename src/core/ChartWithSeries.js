@@ -131,7 +131,7 @@ anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES = 31;
  * Z-index increment multiplier.
  * @type {number}
  */
-anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER = 0.00001;
+anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER = 0.001;
 
 
 //endregion
@@ -237,6 +237,8 @@ anychart.core.ChartWithSeries.prototype.setupSeries = function(series) {
   this.seriesList.push(series);
   var inc = index * anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER;
   var seriesZIndex = this.getBaseSeriesZIndex(series) + inc;
+
+  console.log(goog.getUid(series), seriesZIndex);
 
   series.autoIndex(index);
   series.setAutoZIndex(seriesZIndex);
