@@ -2167,9 +2167,9 @@ anychart.charts.Map.prototype.applyLabelsOverlapState = function() {
       label.series = series;
       label.bounds = series.getLabelBounds(j, anychart.PointState.NORMAL);
 
-      // var ind = 'label_' + series.getIndex() + '_' + j;
-      // if (!this[ind]) this[ind] = this.container().rect();
-      // this[ind].setBounds(anychart.math.Rect.fromCoordinateBox(label.bounds));
+      var ind = 'label_' + series.getIndex() + '_' + j;
+      if (!this[ind]) this[ind] = this.container().rect();
+      this[ind].setBounds(anychart.math.Rect.fromCoordinateBox(label.bounds));
 
       label.index = j;
       label.intersects = [];

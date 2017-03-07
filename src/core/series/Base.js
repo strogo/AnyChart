@@ -1915,7 +1915,7 @@ anychart.core.series.Base.prototype.resolveOption = function(name, point, normal
  * @return {acgraph.vector.ILayer}
  */
 anychart.core.series.Base.prototype.getFactoryContainer = function() {
-  return this.container();
+  return /** @type {acgraph.vector.ILayer} */(this.container());
 };
 
 
@@ -2234,7 +2234,7 @@ anychart.core.series.Base.prototype.selectLabels = function(opt_value) {
  */
 anychart.core.series.Base.prototype.labelsInvalidated_ = function(event) {
   if (event.hasSignal(anychart.Signal.NEEDS_REDRAW)) {
-    this.invalidate(anychart.ConsistencyState.SERIES_LABELS, anychart.Signal.NEEDS_REDRAW);
+    this.invalidate(anychart.ConsistencyState.SERIES_LABELS, anychart.Signal.NEEDS_REDRAW | anychart.Signal.NEED_UPDATE_OVERLAP);
   }
 };
 
