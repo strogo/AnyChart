@@ -27,6 +27,12 @@ anychart.scales.Ordinal = function() {
   this.names_ = [];
 
   /**
+   * @type {!(Array.<number>)}
+   * @private
+   */
+  this.weights_ = [];
+
+  /**
    * @type {!Object.<number>}
    * @private
    */
@@ -161,6 +167,46 @@ anychart.scales.Ordinal.prototype.names = function(opt_value) {
 
 
 /**
+ * Getter/setter for weights.
+ * @param {(Array.<number>)=} opt_value Array of weights.
+ * @return {(Array.<number>|anychart.scales.Ordinal)} Scale weights or self for chaining.
+ */
+anychart.scales.Ordinal.prototype.weights = function(opt_value) {
+  if (goog.isDef(opt_value) && goog.isArray(opt_value)) {
+    if (opt_value.length > this.values_.length)
+      opt_value = opt_value.slice(0, this.values_.length);
+    this.weights_ = [];
+
+    // validate weights values
+    var sum = 0;
+    var count = 0;
+    for (var i = 0; i < opt_value.length; i++) {
+      var weight = anychart.utils.toNumber(opt_value[i]);
+      if (!isNaN(weight) && weight > 0) {
+        sum += weight;
+        count++;
+        this.weights_.push(weight);
+      } else {
+        this.weights_.push(undefined);
+      }
+    }
+
+    // add average weights values for undefined indexes
+    var avg = count > 0 ? (sum / count) : 1;
+    for (var j = 0; j < this.values_.length; j++) {
+      if (!this.weights_[j])
+        this.weights_[j] = avg;
+    }
+
+    this.ticks().markInvalid();
+    this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
+    return this;
+  }
+
+  return this.weights_;
+};
+
+/**
  * Getter for scale names field name.
  * @return {?string} Field name for alias or null if names set explicit.
  */
@@ -209,6 +255,7 @@ anychart.scales.Ordinal.prototype.getValuesMapInternal = function() {
 anychart.scales.Ordinal.prototype.setAutoValues = function(valuesMap, valuesArray) {
   this.valuesMap_ = valuesMap;
   this.values_ = valuesArray;
+  this.weights(this.weights_);
 };
 
 
@@ -221,6 +268,7 @@ anychart.scales.Ordinal.prototype.resetDataRange = function() {
   this.valuesMap_ = {};
   this.autoNames_ = null;
   this.resultNames_ = null;
+  this.weights_ = [];
   return this;
 };
 
@@ -254,6 +302,8 @@ anychart.scales.Ordinal.prototype.extendDataRange = function(var_args) {
       this.values_.push(value);
     }
   }
+  this.weights(this.weights_);
+
   return this;
 };
 
@@ -398,4 +448,5 @@ anychart.scales.ordinal = function() {
   proto['values'] = proto.values;//doc|ex
   proto['names'] = proto.names;//doc|ex
   proto['extendDataRange'] = proto.extendDataRange;//doc|need-ex
+  proto['weights'] = proto.weights;
 })();
