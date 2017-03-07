@@ -172,13 +172,12 @@ anychart.scales.Ordinal.prototype.names = function(opt_value) {
  * @return {(Array.<number>|anychart.scales.Ordinal)} Scale weights or self for chaining.
  */
 anychart.scales.Ordinal.prototype.weights = function(opt_value) {
-  if (goog.isDef(opt_value) && goog.isArray(opt_value) && opt_value.length) {
+  if (goog.isDef(opt_value) && goog.isArray(opt_value)) {
     if (opt_value.length > this.values_.length)
       opt_value = opt_value.slice(0, this.values_.length);
-
     this.weights_ = [];
 
-    // Validate weights values
+    // validate weights values
     var sum = 0;
     var count = 0;
     for (var i = 0; i < opt_value.length; i++) {
@@ -192,23 +191,20 @@ anychart.scales.Ordinal.prototype.weights = function(opt_value) {
       }
     }
 
-    if (count > 0) {
-      var avg = sum / count;
-      for (var j = 0; j < this.weights_.length; j++) {
-        if (!this.weights_[j])
-          this.weights_[j] = avg;
-      }
-
-      this.ticks().markInvalid();
-      this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
+    // add average weights values for undefined indexes
+    var avg = count > 0 ? (sum / count) : 1;
+    for (var j = 0; j < this.values_.length; j++) {
+      if (!this.weights_[j])
+        this.weights_[j] = avg;
     }
 
+    this.ticks().markInvalid();
+    this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
     return this;
   }
 
   return this.weights_;
 };
-
 
 /**
  * Getter for scale names field name.
