@@ -172,38 +172,45 @@ anychart.scales.Ordinal.prototype.names = function(opt_value) {
  * @return {(Array.<number>|anychart.scales.Ordinal)} Scale weights or self for chaining.
  */
 anychart.scales.Ordinal.prototype.weights = function(opt_value) {
-  if (goog.isDef(opt_value) && goog.isArray(opt_value)) {
-    if (opt_value.length > this.values_.length)
-      opt_value = opt_value.slice(0, this.values_.length);
-    this.weights_ = [];
+  if (goog.isDef(opt_value)) {
+    if (goog.isNull(opt_value))
+      this.weights_ = [];
+    else if (goog.isArray(opt_value))
+      this.weights_ = goog.array.clone(opt_value);
+
+    this.resultWeights_ = [];
+    this.ticks().markInvalid();
+    this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
+
+    return this;
+  }
+
+  if (!this.resultWeights_ || this.resultWeights_.length != this.values_.length) {
+    this.resultWeights_ = [];
 
     // validate weights values
     var sum = 0;
     var count = 0;
-    for (var i = 0; i < opt_value.length; i++) {
-      var weight = anychart.utils.toNumber(opt_value[i]);
+    for (var i = 0; i < this.values_.length; i++) {
+      var weight = anychart.utils.toNumber(this.weights_[i]);
       if (!isNaN(weight) && weight > 0) {
         sum += weight;
         count++;
-        this.weights_.push(weight);
+        this.resultWeights_.push(weight);
       } else {
-        this.weights_.push(undefined);
+        this.resultWeights_.push(undefined);
       }
     }
 
     // add average weights values for undefined indexes
     var avg = count > 0 ? (sum / count) : 1;
-    for (var j = 0; j < this.values_.length; j++) {
-      if (!this.weights_[j])
-        this.weights_[j] = avg;
+    for (var j = 0; j < this.resultWeights_.length; j++) {
+      if (!this.resultWeights_[j])
+        this.resultWeights_[j] = avg;
     }
-
-    this.ticks().markInvalid();
-    this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
-    return this;
   }
 
-  return this.weights_;
+  return this.resultWeights_;
 };
 
 /**
@@ -255,7 +262,7 @@ anychart.scales.Ordinal.prototype.getValuesMapInternal = function() {
 anychart.scales.Ordinal.prototype.setAutoValues = function(valuesMap, valuesArray) {
   this.valuesMap_ = valuesMap;
   this.values_ = valuesArray;
-  this.weights(this.weights_);
+  //this.weights(this.weights_);
 };
 
 
@@ -268,7 +275,7 @@ anychart.scales.Ordinal.prototype.resetDataRange = function() {
   this.valuesMap_ = {};
   this.autoNames_ = null;
   this.resultNames_ = null;
-  this.weights_ = [];
+  this.resultWeights_ = [];
   return this;
 };
 
@@ -302,7 +309,7 @@ anychart.scales.Ordinal.prototype.extendDataRange = function(var_args) {
       this.values_.push(value);
     }
   }
-  this.weights(this.weights_);
+  //this.weights(this.weights_);
 
   return this;
 };
