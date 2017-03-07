@@ -238,8 +238,6 @@ anychart.core.ChartWithSeries.prototype.setupSeries = function(series) {
   var inc = index * anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER;
   var seriesZIndex = this.getBaseSeriesZIndex(series) + inc;
 
-  console.log(goog.getUid(series), seriesZIndex);
-
   series.autoIndex(index);
   series.setAutoZIndex(seriesZIndex);
   series.setAutoColor(this.palette().itemAt(index));
