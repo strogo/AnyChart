@@ -483,6 +483,19 @@ anychart.core.series.Map.prototype.drawLabel = function(point, pointState) {
 
 
 //endregion
+//region --- Factories optimization
+//----------------------------------------------------------------------------------------------------------------------
+//
+//  Factories optimization
+//
+//----------------------------------------------------------------------------------------------------------------------
+/** @inheritDoc */
+anychart.core.series.Map.prototype.getFactoryContainer = function() {
+  return this.rootLayer;
+};
+
+
+//endregion
 //region --- Check functions
 /**
  * Tester if the series is size based (bubble).

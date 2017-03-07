@@ -131,7 +131,7 @@ anychart.core.ChartWithSeries.ZINDEX_LINE_SERIES = 31;
  * Z-index increment multiplier.
  * @type {number}
  */
-anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER = 0.001;
+anychart.core.ChartWithSeries.ZINDEX_INCREMENT_MULTIPLIER = 0.00001;
 
 
 //endregion

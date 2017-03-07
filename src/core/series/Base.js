@@ -1911,6 +1911,15 @@ anychart.core.series.Base.prototype.resolveOption = function(name, point, normal
 //
 //----------------------------------------------------------------------------------------------------------------------
 /**
+ * Returns container for factory.
+ * @return {acgraph.vector.ILayer}
+ */
+anychart.core.series.Base.prototype.getFactoryContainer = function() {
+  return this.container();
+};
+
+
+/**
  * Prepares passed factory to be displayed. Returns true, if the factory SHOULD be drawn.
  * @param {anychart.core.ui.LabelsFactory|anychart.core.ui.MarkersFactory} factory
  * @param {boolean} stateFactoriesEnabled
@@ -1923,7 +1932,7 @@ anychart.core.series.Base.prototype.resolveOption = function(name, point, normal
 anychart.core.series.Base.prototype.prepareFactory = function(factory, stateFactoriesEnabled, hasPointSettings, isSupported, consistency) {
   factory.suspendSignalsDispatching();
   if (this.check(isSupported) && ((factory.enabled() !== false) || stateFactoriesEnabled || hasPointSettings)) {
-    factory.container(/** @type {acgraph.vector.ILayer} */(this.container()));
+    factory.container(this.getFactoryContainer());
     if (this.hasInvalidationState(consistency)) {
       factory.clear();
       factory.parentBounds(this.pixelBoundsCache);
