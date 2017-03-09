@@ -305,7 +305,8 @@ anychart.core.shapeManagers.Base.prototype.getShapesGroup = function(state, opt_
   for (var name in names) {
     var descriptor = names[name];
     if (descriptor.shapeType == anychart.enums.ShapeType.NONE && opt_shape) {
-      res[name] = this.configureShape(name, state, indexOrGlobal, opt_baseZIndex || 0, opt_shape);
+      if (opt_shape instanceof acgraph.vector.Shape)
+        res[name] = this.configureShape(name, state, indexOrGlobal, opt_baseZIndex || 0, opt_shape);
     } else {
       res[name] = this.createShape(name, state, indexOrGlobal, opt_baseZIndex || 0);
     }

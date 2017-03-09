@@ -49,7 +49,7 @@ anychart.core.drawers.map.Choropleth.prototype.flags = (
 
 /**
  * Y values list that are required by this drawer.
- * @type {Array.<string>}
+ * @type {Array.<string>}                                                                            
  */
 anychart.core.drawers.map.Choropleth.prototype.yValueNames = (['id', 'value']);
 
@@ -74,10 +74,11 @@ anychart.core.drawers.map.Choropleth.prototype.drawSubsequentPoint = function(po
     if (goog.isDef(feature.domElement)) {
       this.series.getChart().featureTraverser(feature, function(shape) {
         var element = shape.domElement;
-        if (!element)
+        if (!element || element instanceof acgraph.vector.Layer)
           return;
 
         element.visible(true);
+
         var shapes = this.shapesManager.getShapesGroup(state, undefined, undefined, element);
 
         var mainElement = shapes['foreignFill'];

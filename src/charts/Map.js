@@ -3627,7 +3627,7 @@ anychart.charts.Map.prototype.drawContent = function(bounds) {
 /**
  * Traverser for complex feature.
  * @param {Object} feature Geo feature.
- * @param {!Function} f Function for applying to feature chilren.
+ * @param {!Function} f Function for applying to feature children.
  * @param {Object=} opt_obj This is used as the 'this' object within f.
  */
 anychart.charts.Map.prototype.featureTraverser = function(feature, f, opt_obj) {
