@@ -356,9 +356,11 @@ anychart.core.shapeManagers.Base.prototype.updateColors = function(state, opt_sh
         }
       }
 
-      var iterator = this.series.getIterator();
-      iterator.meta(descriptor.isHatchFill ? 'hatchFill' : 'fill', fill);
-      iterator.meta('stroke', stroke);
+      if (!descriptor.isHatchFill) {
+        var iterator = this.series.getIterator();
+        iterator.meta('fill', fill);
+        iterator.meta('stroke', stroke);
+      }
     }
     this.postProcessor(this.series, opt_shapesGroup, state);
   }

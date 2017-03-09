@@ -736,7 +736,7 @@ anychart.core.series.Map.prototype.applyZoomMoveTransform = function() {
       var xNew = posProvider['x'];
       var yNew = posProvider['y'];
 
-      domElement = paths['path'] || paths['circle'];
+      domElement = paths['path'] || paths['circle'] || paths['negative'];
       selfTx = domElement.getSelfTransformation();
 
       trX = (selfTx ? -selfTx.getTranslateX() : 0) + xNew - xPrev;
@@ -1551,15 +1551,9 @@ anychart.core.series.Map.prototype.getMarkersPosition = function(pointState) {
  */
 anychart.core.series.Map.prototype.getReferenceScaleValues = function() {
   if (!this.enabled()) return null;
-  var refValues = this.getYValueNames();
-  var res = [];
   var iterator = this.getIterator();
-  for (var i = 0, len = refValues.length; i < len; i++) {
-    var val = iterator.get(refValues[i]);
-    if (anychart.utils.isNaN(val)) return null;
-    res.push(val);
-  }
-  return res;
+  var val = iterator.get(this.drawer.valueFieldName);
+  return [val];
 };
 
 
