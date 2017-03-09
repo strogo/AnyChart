@@ -945,6 +945,13 @@ anychart.core.ChartWithSeries.prototype.ensureStatisticsReady = function() {
 };
 
 
+/** @inheritDoc */
+anychart.core.ChartWithSeries.prototype.drawInternal = function() {
+  if (!this.isConsistent(anychart.ConsistencyState.SERIES_CHART_STATISTICS))
+    anychart.core.ChartWithSeries.base(this, 'drawInternal');
+};
+
+
 /**
  * Performs full calculations of drawing plans and statistics.
  */
