@@ -74,11 +74,11 @@ anychart.core.drawers.map.Choropleth.prototype.drawSubsequentPoint = function(po
     if (goog.isDef(feature.domElement)) {
       this.series.getChart().featureTraverser(feature, function(shape) {
         var element = shape.domElement;
-        if (!element || element instanceof acgraph.vector.Layer)
+        if (!element || !(element instanceof acgraph.vector.Shape))
           return;
 
         element.visible(true);
-
+        point.meta('currentPointElement', shape);
         var shapes = this.shapesManager.getShapesGroup(state, undefined, undefined, element);
 
         var mainElement = shapes['foreignFill'];
@@ -89,6 +89,8 @@ anychart.core.drawers.map.Choropleth.prototype.drawSubsequentPoint = function(po
 
         var hatchFillElement = /** @type {!acgraph.vector.Path} */(shapes['hatchFill']);
         hatchFillElement.deserialize(element.serializePathArgs());
+
+        shape.hatchFillDomElement = hatchFillElement;
       }, this);
     }
   }

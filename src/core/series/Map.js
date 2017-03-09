@@ -868,6 +868,48 @@ anychart.core.series.Map.prototype.allowPointsSelect = function(opt_value) {
 };
 
 
+/** @inheritDoc */
+anychart.core.series.Map.prototype.applyAppearanceToPoint = function(pointState) {
+  var iterator = this.getIterator();
+  if (this.isDiscreteBased()) {
+    if (this.isChoropleth()) {
+      var features = iterator.meta('features');
+      if (!features)
+        return;
+
+      for (var i = 0, len = features.length; i < len; i++) {
+        var feature = features[i];
+        if (goog.isDef(feature.domElement)) {
+          this.getChart().featureTraverser(feature, function(shape) {
+            var element = shape.domElement;
+            if (!element || !(element instanceof acgraph.vector.Shape))
+              return;
+
+            iterator.meta('currentPointElement', shape);
+
+            var shapeGroup = {
+              'foreignFill': element,
+              'hatchFill': shape.hatchFillDomElement
+            };
+            this.shapeManager.updateColors(pointState, shapeGroup);
+          }, this);
+        }
+      }
+
+    } else {
+      this.shapeManager.updateColors(pointState,
+          /** @type {Object.<string, acgraph.vector.Shape>} */(iterator.meta('shapes')));
+    }
+  }
+  if (this.supportsOutliers()) {
+    this.drawPointOutliers(iterator, pointState);
+  }
+  this.drawer.updatePoint(iterator, pointState);
+  this.drawMarker(iterator, pointState);
+  this.drawLabel(iterator, pointState);
+};
+
+
 //endregion
 //region --- Drawing
 /**

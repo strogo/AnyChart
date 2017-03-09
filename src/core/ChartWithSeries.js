@@ -271,7 +271,7 @@ anychart.core.ChartWithSeries.prototype.createSeriesByType = function(type, data
         (series.check(anychart.core.drawers.Capabilities.IS_3D_BASED) ? anychart.ConsistencyState.BOUNDS : 0) |
         anychart.ConsistencyState.SERIES_CHART_SERIES |
         anychart.ConsistencyState.CHART_LEGEND |
-        anychart.ConsistencyState.SCALE_CHART_SCALES |
+        anychart.ConsistencyState.SCALE_CHART_SCALES |                                         
         anychart.ConsistencyState.SCALE_CHART_Y_SCALES |
         anychart.ConsistencyState.SCALE_CHART_SCALE_MAPS,
         anychart.Signal.NEEDS_REDRAW);
