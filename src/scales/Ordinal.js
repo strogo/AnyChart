@@ -231,7 +231,6 @@ anychart.scales.Ordinal.prototype.weightRatios = function() {
       return val / sum;
     });
   }
-
   return this.weightRatios_;
 };
 
@@ -411,9 +410,17 @@ anychart.scales.Ordinal.prototype.transform = function(value, opt_subRangeRatio)
  */
 anychart.scales.Ordinal.prototype.inverseTransform = function(ratio) {
   ratio = this.reverseZoomAndInverse(ratio);
-  //todo(Anton Saukh): needs improvement.
-  var index = goog.math.clamp(Math.ceil(ratio * this.values_.length) - 1, 0, this.values_.length - 1);
-  return this.values_[index];
+
+  var weightRatios = this.weightRatios();
+  var i;
+  var min;
+  var max = 0;
+  for (i = 0; i < weightRatios.length; i++) {
+    min = max;
+    max = min + weightRatios[i];
+    if (ratio > min && ratio <= max) break;
+  }
+  return this.values_[i];
 };
 
 
