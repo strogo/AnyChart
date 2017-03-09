@@ -154,8 +154,14 @@ anychart.core.series.Cartesian.prototype.applyDefaultsToElements = function(defa
 //
 //----------------------------------------------------------------------------------------------------------------------
 /** @inheritDoc */
-anychart.core.series.Cartesian.prototype.getCategoryWidth = function() {
-  return (this.xScale().getPointWidthRatio() || (this.xScale().getZoomFactor() / this.getIterator().getRowsCount())) *
+anychart.core.series.Cartesian.prototype.getCategoryWidth = function(opt_categoryIndex) {
+  var ratio;
+  if(goog.isDef(opt_categoryIndex) && this.xScale() instanceof anychart.scales.Ordinal) {
+    ratio = this.xScale().weightRatios()[opt_categoryIndex];
+  } else {
+    ratio = this.xScale().getPointWidthRatio();
+  }
+  return (ratio || (this.xScale().getZoomFactor() / this.getIterator().getRowsCount())) *
       (this.getOption('isVertical') ? this.pixelBoundsCache.height : this.pixelBoundsCache.width);
 };
 

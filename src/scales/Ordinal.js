@@ -179,6 +179,7 @@ anychart.scales.Ordinal.prototype.weights = function(opt_value) {
       this.weights_ = goog.array.clone(opt_value);
 
     this.resultWeights_ = [];
+    this.weightRatios_ = [];
     this.ticks().markInvalid();
     this.dispatchSignal(anychart.Signal.NEEDS_REAPPLICATION);
 
@@ -212,6 +213,28 @@ anychart.scales.Ordinal.prototype.weights = function(opt_value) {
 
   return this.resultWeights_;
 };
+
+
+/**
+ * Getter for weight ratios.
+ * @return {Array.<number>} Array of weight ratios. Each ratio is a value from 0 to 1.
+ */
+anychart.scales.Ordinal.prototype.weightRatios = function() {
+  if (!this.weightRatios_ || this.weightRatios_.length != this.values_.length) {
+    var weights = this.weights();
+    var sum = 0;
+    for (var i in weights) {
+      sum += weights[i];
+    }
+
+    this.weightRatios_ = weights.map(function(val) {
+      return val / sum;
+    });
+  }
+
+  return this.weightRatios_;
+};
+
 
 /**
  * Getter for scale names field name.
@@ -262,7 +285,6 @@ anychart.scales.Ordinal.prototype.getValuesMapInternal = function() {
 anychart.scales.Ordinal.prototype.setAutoValues = function(valuesMap, valuesArray) {
   this.valuesMap_ = valuesMap;
   this.values_ = valuesArray;
-  //this.weights(this.weights_);
 };
 
 
@@ -276,6 +298,7 @@ anychart.scales.Ordinal.prototype.resetDataRange = function() {
   this.autoNames_ = null;
   this.resultNames_ = null;
   this.resultWeights_ = [];
+  this.weightRatios_ = [];
   return this;
 };
 
@@ -309,7 +332,6 @@ anychart.scales.Ordinal.prototype.extendDataRange = function(var_args) {
       this.values_.push(value);
     }
   }
-  //this.weights(this.weights_);
 
   return this;
 };
@@ -357,9 +379,15 @@ anychart.scales.Ordinal.prototype.getPointWidthRatio = function() {
 anychart.scales.Ordinal.prototype.transform = function(value, opt_subRangeRatio) {
   var index = this.getIndexByValue(value);
   if (isNaN(index)) return NaN;
-  var result = index / this.values_.length +
-      (opt_subRangeRatio || 0) / this.values_.length; // sub scale part
-  return this.applyZoomAndInverse(result);
+
+  var weightRatios = this.weightRatios();
+  var ratio = (opt_subRangeRatio || 0) * weightRatios[index];
+
+  while (index > 0) {
+    ratio += weightRatios[--index];
+  }
+
+  return this.applyZoomAndInverse(ratio);
 };
 
 
