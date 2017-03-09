@@ -1218,7 +1218,7 @@ anychart.core.Chart.prototype.drawInternal = function() {
     this.autoRedrawIsSet_ = true;
   }
 
-  if (!this.checkDrawingNeeded())
+  if (!this.checkDrawingNeeded() || this.isConsistent(anychart.ConsistencyState.SERIES_CHART_STATISTICS))
     return;
 
   anychart.performance.start('Chart.draw()');
