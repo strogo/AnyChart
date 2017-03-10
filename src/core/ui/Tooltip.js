@@ -784,8 +784,9 @@ anychart.core.ui.Tooltip.prototype.setPositionForSingle_ = function(tooltip, cli
       break;
 
     case anychart.enums.TooltipPositionMode.POINT:
-      var positionProvider = opt_series.createPositionProvider(position, true)['value'];
+      var positionProvider;
       if (opt_series) {
+        positionProvider = opt_series.createPositionProvider(position, true)['value'];
         x = positionProvider['x'] + (allowGlobalCont ? chartOffset.x : 0);
         y = positionProvider['y'] + (allowGlobalCont ? chartOffset.y : 0);
       } else {
